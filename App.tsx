@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 
 // Importar pantallas
-import { AudioTestScreen, HomeScreen, LibraryScreen, NowPlayingScreen, ProfileScreen, SearchScreen } from './screens';
+import { HomeScreen, LibraryScreen, NowPlayingScreen, ProfileScreen, SearchScreen } from './screens';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -67,16 +67,6 @@ export default function App() {
       <StatusBar style="light" />
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Main" component={TabNavigator} />
-        <Stack.Screen 
-          name="AudioTest" 
-          component={AudioTestScreen}
-          options={{
-            headerShown: true,
-            title: 'Prueba de Audio',
-            headerStyle: { backgroundColor: '#1a1a1a' },
-            headerTintColor: '#fff',
-          }}
-        />
         <Stack.Screen 
           name="NowPlaying" 
           component={NowPlayingScreen}

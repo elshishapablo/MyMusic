@@ -9,7 +9,6 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { CustomButton } from '../components/CustomButton';
 
 const { width } = Dimensions.get('window');
 
@@ -48,7 +47,9 @@ const quickAccess = [
 export default function HomeScreen({ navigation }: any) {
   // Función para manejar el clic en Don't Cry
   const handleDontCryPress = () => {
-    navigation.navigate('NowPlaying');
+    navigation.navigate('NowPlaying', {
+      song: dontCryTrack
+    });
   };
 
   // Datos de ejemplo estáticos
@@ -125,7 +126,7 @@ export default function HomeScreen({ navigation }: any) {
                 style={styles.specialTrackCard}
                 onPress={handleDontCryPress}
               >
-                <Image source={{ uri: dontCryTrack.image }} style={styles.specialTrackImage} />
+                <Image source={dontCryTrack.image} style={styles.specialTrackImage} />
                 <View style={styles.specialTrackInfo}>
                   <Text style={styles.specialTrackTitle}>{dontCryTrack.title}</Text>
                   <Text style={styles.specialTrackArtist}>{dontCryTrack.artist}</Text>
@@ -171,14 +172,6 @@ export default function HomeScreen({ navigation }: any) {
               </ScrollView>
             </View>
 
-            {/* Botón de prueba de audio */}
-            <View style={styles.nowPlayingContainer}>
-              <CustomButton
-                title="Prueba de Audio Local"
-                onPress={() => navigation.navigate('AudioTest')}
-                style={styles.continueButton}
-              />
-            </View>
 
       {/* Música Electrónica */}
       <View style={styles.section}>
