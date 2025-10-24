@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-    Dimensions,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -121,7 +121,7 @@ export default function HomeScreen({ navigation }: any) {
 
             {/* Canción especial Don't Cry */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🎸 Tu Canción Local</Text>
+              <Text style={styles.sectionTitle}>🎸 Tus Canciónes</Text>
               <TouchableOpacity
                 style={styles.specialTrackCard}
                 onPress={handleDontCryPress}
@@ -130,7 +130,7 @@ export default function HomeScreen({ navigation }: any) {
                 <View style={styles.specialTrackInfo}>
                   <Text style={styles.specialTrackTitle}>{dontCryTrack.title}</Text>
                   <Text style={styles.specialTrackArtist}>{dontCryTrack.artist}</Text>
-                  <Text style={styles.specialTrackSubtitle}>🎵 Archivo local • Toca para reproducir</Text>
+                  <Text style={styles.specialTrackSubtitle}>🎵 Toca para reproducir</Text>
                 </View>
                 <View style={styles.playIconContainer}>
                   <Ionicons name="play-circle" size={40} color="#20B2AA" />

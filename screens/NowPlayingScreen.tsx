@@ -21,6 +21,7 @@ export default function NowPlayingScreen({ navigation, route }: any) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState('0:00');
   const [totalTime, setTotalTime] = useState('3:53');
+  const [progress, setProgress] = useState(0); // Progreso de 0 a 1
   const [isShuffled, setIsShuffled] = useState(false);
   const [isRepeating, setIsRepeating] = useState(false);
 
@@ -71,11 +72,22 @@ export default function NowPlayingScreen({ navigation, route }: any) {
             }
           }
           
-          // Actualizar tiempo actual
-          if (status.positionMillis !== undefined) {
+          // Actualizar tiempo actual y progreso
+          if (status.positionMillis !== undefined && status.durationMillis !== undefined) {
             const minutes = Math.floor(status.positionMillis / 60000);
             const seconds = Math.floor((status.positionMillis % 60000) / 1000);
             setCurrentTime(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+            
+            // Calcular progreso (0 a 1)
+            const progressValue = status.positionMillis / status.durationMillis;
+            setProgress(progressValue);
+            
+            // Actualizar tiempo total si no está establecido
+            if (totalTime === '3:53') {
+              const totalMinutes = Math.floor(status.durationMillis / 60000);
+              const totalSeconds = Math.floor((status.durationMillis % 60000) / 1000);
+              setTotalTime(`${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`);
+            }
           }
         }
       });
@@ -119,6 +131,21 @@ export default function NowPlayingScreen({ navigation, route }: any) {
 
   const toggleRepeat = () => {
     setIsRepeating(!isRepeating);
+  };
+
+  // Función para saltar a una posición específica
+  const seekToPosition = async (position: number) => {
+    if (!sound) return;
+
+    try {
+      const duration = await sound.getStatusAsync();
+      if (duration.isLoaded && duration.durationMillis) {
+        const targetPosition = position * duration.durationMillis;
+        await sound.setPositionAsync(targetPosition);
+      }
+    } catch (error) {
+      console.error('Error seeking:', error);
+    }
   };
 
   // Limpiar recursos cuando el componente se desmonte
@@ -169,10 +196,19 @@ export default function NowPlayingScreen({ navigation, route }: any) {
         {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <Text style={styles.timeText}>{currentTime}</Text>
-          <View style={styles.progressBar}>
-            <View style={styles.progressFill} />
-            <View style={styles.progressThumb} />
-          </View>
+          <TouchableOpacity 
+            style={styles.progressBar}
+            onPress={(event) => {
+              const { locationX } = event.nativeEvent;
+              const barWidth = width - 120; // Aproximadamente el ancho de la barra
+              const newProgress = Math.max(0, Math.min(1, locationX / barWidth));
+              seekToPosition(newProgress);
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+            <View style={[styles.progressThumb, { left: `${progress * 100}%` }]} />
+          </TouchableOpacity>
           <Text style={styles.timeText}>{totalTime}</Text>
         </View>
 
@@ -327,16 +363,15 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#20B2AA',
     borderRadius: 2,
-    width: '0%',
   },
   progressThumb: {
     position: 'absolute',
-    left: 0,
     top: -6,
     width: 16,
     height: 16,
     backgroundColor: '#20B2AA',
     borderRadius: 8,
+    marginLeft: -8, // Centrar el thumb en la posición
   },
   mainControls: {
     flexDirection: 'row',
