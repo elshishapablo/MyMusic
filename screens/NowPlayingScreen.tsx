@@ -1,128 +1,81 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import React, { useEffect, useState } from 'react';
 import {
     Dimensions,
     Image,
+    SafeAreaView,
+    StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
-import { useMusic } from '../contexts/MusicContext';
 
 const { width, height } = Dimensions.get('window');
 
-// Datos de ejemplo de la canción actual
-const currentSong = {
-  id: '1',
-  title: 'Blinding Lights',
-  artist: 'The Weeknd',
-  album: 'After Hours',
-  duration: 200, // segundos
-  image: 'https://via.placeholder.com/300x300/20B2AA/FFFFFF?text=BL',
-  isLiked: false,
-};
-
-const relatedSongs = [
-  {
-    id: '2',
-    title: 'Save Your Tears',
-    artist: 'The Weeknd',
-    album: 'After Hours',
-    duration: '3:35',
-  },
-  {
-    id: '3',
-    title: 'In Your Eyes',
-    artist: 'The Weeknd',
-    album: 'After Hours',
-    duration: '3:57',
-  },
-  {
-    id: '4',
-    title: 'Heartless',
-    artist: 'The Weeknd',
-    album: 'After Hours',
-    duration: '3:18',
-  },
-];
-
-export default function NowPlayingScreen() {
-  const navigation = useNavigation();
-  const { state, pauseTrack, resumeTrack } = useMusic();
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isShuffled, setIsShuffled] = useState(false);
-  const [repeatMode, setRepeatMode] = useState<'off' | 'one' | 'all'>('off');
+export default function NowPlayingScreen({ navigation }: any) {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
-  
-  // Usar la canción actual del contexto
-  const currentSong = state.currentTrack || {
-    id: '1',
-    title: 'No hay canción seleccionada',
-    artist: 'Selecciona una canción',
-    album: '',
-    duration: 200,
-    image: 'https://via.placeholder.com/300x300/20B2AA/FFFFFF?text=SC',
-    isLiked: false,
-  };
-  
-  const progress = (currentTime / currentSong.duration) * 100;
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  // Datos de la canción
+  const currentTrack = {
+    title: "Don't Cry",
+    artist: 'Guns N\' Roses',
+    album: 'Use Your Illusion I',
+    year: '1991',
+    image: require('../assets/images/dont_cry.jpg'),
+    duration: 284, // 4:44 en segundos
   };
 
-  const handleRepeat = () => {
-    const modes: ('off' | 'one' | 'all')[] = ['off', 'one', 'all'];
-    const currentIndex = modes.indexOf(repeatMode);
-    setRepeatMode(modes[(currentIndex + 1) % modes.length]);
-  };
-
-  // Reproducir audio cuando se carga la pantalla
-  useEffect(() => {
-    const playAudio = async () => {
-      if (currentSong.previewUrl) {
-        try {
-          // Detener audio anterior si existe
-          if (sound) {
-            await sound.unloadAsync();
-          }
-
-          // Crear nuevo audio
-          const { sound: newSound } = await Audio.Sound.createAsync(
-            { uri: currentSong.previewUrl },
-            { 
-              shouldPlay: true,
-              isLooping: false,
-              volume: 1.0
-            }
-          );
-          
-          setSound(newSound);
-          setIsPlaying(true);
-        } catch (error) {
-          console.error('Error playing audio:', error);
-        }
-      }
-    };
-
-    playAudio();
-
-    // Cleanup al desmontar
-    return () => {
+  // Cargar y reproducir el audio
+  const loadAndPlayAudio = async () => {
+    try {
+      setIsLoading(true);
+      
       if (sound) {
-        sound.unloadAsync();
+        await sound.unloadAsync();
+        setSound(null);
       }
-    };
-  }, [currentSong.id]);
 
-  const handlePlayPause = async () => {
-    if (sound) {
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        require('../assets/audio/dont_cry.mp3')
+      );
+
+      setSound(newSound);
+      setDuration(newSound.durationMillis || 0);
+
+      // Configurar el callback de estado
+      newSound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded) {
+          setPosition(status.positionMillis || 0);
+          if (status.didJustFinish) {
+            setIsPlaying(false);
+          }
+        }
+      });
+
+      await newSound.playAsync();
+      setIsPlaying(true);
+
+    } catch (error) {
+      console.error('Error loading audio:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Toggle play/pause
+  const togglePlayPause = async () => {
+    if (!sound) {
+      await loadAndPlayAudio();
+      return;
+    }
+
+    try {
       if (isPlaying) {
         await sound.pauseAsync();
         setIsPlaying(false);
@@ -130,130 +83,150 @@ export default function NowPlayingScreen() {
         await sound.playAsync();
         setIsPlaying(true);
       }
+    } catch (error) {
+      console.error('Error toggling playback:', error);
     }
   };
 
+  // Detener reproducción
+  const stopAudio = async () => {
+    if (sound) {
+      await sound.stopAsync();
+      setIsPlaying(false);
+      setPosition(0);
+    }
+  };
+
+  // Formatear tiempo
+  const formatTime = (milliseconds: number) => {
+    const seconds = Math.floor(milliseconds / 1000);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Limpiar recursos
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.unloadAsync().catch(console.error);
+      }
+    };
+  }, [sound]);
+
+  // Cargar automáticamente al entrar
+  useEffect(() => {
+    loadAndPlayAudio();
+  }, []);
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity 
+          style={styles.closeButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="chevron-down" size={24} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>Reproduciendo desde</Text>
-          <Text style={styles.headerSubtitle}>Tu biblioteca</Text>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerSubtitle}>Reproduciendo desde</Text>
+          <Text style={styles.headerTitle}>Tu biblioteca</Text>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity style={styles.moreButton}>
           <Ionicons name="ellipsis-horizontal" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      {/* Álbum artwork */}
-      <View style={styles.artworkContainer}>
-        <Image source={{ uri: currentSong.image }} style={styles.artwork} />
+      {/* Album Art */}
+      <View style={styles.albumContainer}>
+        <Image source={{ uri: currentTrack.image }} style={styles.albumArt} />
       </View>
 
-      {/* Información de la canción */}
+      {/* Song Info */}
       <View style={styles.songInfo}>
-        <Text style={styles.songTitle}>{currentSong.title}</Text>
-        <Text style={styles.songArtist}>{currentSong.artist}</Text>
+        <Text style={styles.songTitle}>{currentTrack.title}</Text>
+        <Text style={styles.songArtist}>{currentTrack.artist}</Text>
       </View>
 
-      {/* Barra de progreso */}
+      {/* Progress Bar */}
       <View style={styles.progressContainer}>
-        <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
+        <Text style={styles.timeText}>{formatTime(position)}</Text>
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${progress}%` }]} />
-          <View style={[styles.progressThumb, { left: `${progress}%` }]} />
+          <View 
+            style={[
+              styles.progressFill, 
+              { width: duration > 0 ? `${(position / duration) * 100}%` : '0%' }
+            ]} 
+          />
         </View>
-        <Text style={styles.timeText}>{formatTime(currentSong.duration)}</Text>
+        <Text style={styles.timeText}>{formatTime(duration)}</Text>
       </View>
 
-      {/* Controles principales */}
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => setIsShuffled(!isShuffled)}
-        >
-          <Ionicons
-            name="shuffle"
-            size={24}
-            color={isShuffled ? '#20B2AA' : '#ccc'}
-          />
-        </TouchableOpacity>
-
+      {/* Controls */}
+      <View style={styles.controls}>
         <TouchableOpacity style={styles.controlButton}>
-          <Ionicons name="play-skip-back" size={32} color="#fff" />
+          <Ionicons name="shuffle" size={24} color="#fff" />
         </TouchableOpacity>
-
-        <TouchableOpacity
+        
+        <TouchableOpacity style={styles.controlButton}>
+          <Ionicons name="play-skip-back" size={28} color="#fff" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
           style={styles.playButton}
-          onPress={handlePlayPause}
+          onPress={togglePlayPause}
+          disabled={isLoading}
         >
-          <Ionicons
-            name={isPlaying ? 'pause' : 'play'}
-            size={40}
-            color="#fff"
+          <Ionicons 
+            name={isPlaying ? "pause" : "play"} 
+            size={32} 
+            color="#1a1a1a" 
           />
         </TouchableOpacity>
-
+        
         <TouchableOpacity style={styles.controlButton}>
-          <Ionicons name="play-skip-forward" size={32} color="#fff" />
+          <Ionicons name="play-skip-forward" size={28} color="#fff" />
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={handleRepeat}
-        >
-          <Ionicons
-            name={repeatMode === 'off' ? 'repeat' : repeatMode === 'one' ? 'repeat' : 'repeat'}
-            size={24}
-            color={repeatMode === 'off' ? '#ccc' : '#20B2AA'}
-          />
+        
+        <TouchableOpacity style={styles.controlButton}>
+          <Ionicons name="repeat" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      {/* Controles secundarios */}
-      <View style={styles.secondaryControls}>
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => setIsLiked(!isLiked)}
-        >
-          <Ionicons
-            name={isLiked ? 'heart' : 'heart-outline'}
-            size={24}
-            color={isLiked ? '#FF6B6B' : '#ccc'}
-          />
+      {/* Action Buttons */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons name="heart-outline" size={20} color="#fff" />
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.secondaryButton}>
-          <Ionicons name="add" size={24} color="#ccc" />
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons name="add" size={20} color="#fff" />
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.secondaryButton}>
-          <Ionicons name="share-outline" size={24} color="#ccc" />
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons name="share-outline" size={20} color="#fff" />
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.secondaryButton}>
-          <Ionicons name="list" size={24} color="#ccc" />
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons name="list" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      {/* Lista de reproducción */}
-      <View style={styles.playlistContainer}>
-        <Text style={styles.playlistTitle}>Próximas canciones</Text>
-        {relatedSongs.map((song, index) => (
-          <TouchableOpacity key={song.id} style={styles.playlistItem}>
-            <View style={styles.playlistItemInfo}>
-              <Text style={styles.playlistItemTitle}>{song.title}</Text>
-              <Text style={styles.playlistItemArtist}>{song.artist}</Text>
-            </View>
-            <Text style={styles.playlistItemDuration}>{song.duration}</Text>
-          </TouchableOpacity>
-        ))}
+      {/* Next Songs */}
+      <View style={styles.nextSongs}>
+        <Text style={styles.nextSongsTitle}>Próximas canciones</Text>
+        <View style={styles.nextSongItem}>
+          <Text style={styles.nextSongTitle}>Sweet Child O' Mine</Text>
+          <Text style={styles.nextSongArtist}>Guns N' Roses</Text>
+          <Text style={styles.nextSongDuration}>5:03</Text>
+        </View>
+        <View style={styles.nextSongItem}>
+          <Text style={styles.nextSongTitle}>November Rain</Text>
+          <Text style={styles.nextSongArtist}>Guns N' Roses</Text>
+          <Text style={styles.nextSongDuration}>8:57</Text>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -267,53 +240,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 30,
+    paddingVertical: 15,
   },
-  headerInfo: {
+  closeButton: {
+    padding: 5,
+  },
+  headerCenter: {
     alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 14,
-    color: '#ccc',
   },
   headerSubtitle: {
+    color: '#ccc',
     fontSize: 12,
-    color: '#888',
   },
-  artworkContainer: {
+  headerTitle: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  moreButton: {
+    padding: 5,
+  },
+  albumContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginVertical: 30,
   },
-  artwork: {
-    width: width * 0.7,
-    height: width * 0.7,
+  albumArt: {
+    width: width * 0.8,
+    height: width * 0.8,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
   },
   songInfo: {
     alignItems: 'center',
     marginBottom: 30,
-    paddingHorizontal: 20,
   },
   songTitle: {
+    color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
     marginBottom: 8,
-    textAlign: 'center',
   },
   songArtist: {
-    fontSize: 16,
     color: '#ccc',
-    textAlign: 'center',
+    fontSize: 16,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -322,8 +290,8 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   timeText: {
-    fontSize: 12,
     color: '#ccc',
+    fontSize: 12,
     minWidth: 40,
   },
   progressBar: {
@@ -339,84 +307,64 @@ const styles = StyleSheet.create({
     backgroundColor: '#20B2AA',
     borderRadius: 2,
   },
-  progressThumb: {
-    position: 'absolute',
-    top: -6,
-    width: 16,
-    height: 16,
-    backgroundColor: '#20B2AA',
-    borderRadius: 8,
-    marginLeft: -8,
-  },
-  controlsContainer: {
+  controls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 30,
   },
   controlButton: {
     padding: 10,
     marginHorizontal: 10,
   },
   playButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#20B2AA',
-    borderRadius: 35,
-    width: 70,
-    height: 70,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 20,
-    shadowColor: '#20B2AA',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    justifyContent: 'center',
+    marginHorizontal: 15,
   },
-  secondaryControls: {
+  actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingHorizontal: 40,
     marginBottom: 30,
   },
-  secondaryButton: {
+  actionButton: {
     padding: 10,
   },
-  playlistContainer: {
+  nextSongs: {
     paddingHorizontal: 20,
-    marginBottom: 20,
   },
-  playlistTitle: {
+  nextSongsTitle: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
     marginBottom: 15,
   },
-  playlistItem: {
+  nextSongItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
   },
-  playlistItemInfo: {
+  nextSongTitle: {
+    color: '#fff',
+    fontSize: 14,
     flex: 1,
   },
-  playlistItemTitle: {
-    fontSize: 14,
-    color: '#fff',
-    marginBottom: 4,
-  },
-  playlistItemArtist: {
+  nextSongArtist: {
+    color: '#ccc',
     fontSize: 12,
-    color: '#888',
+    flex: 1,
   },
-  playlistItemDuration: {
+  nextSongDuration: {
+    color: '#ccc',
     fontSize: 12,
-    color: '#888',
+    marginLeft: 10,
   },
 });

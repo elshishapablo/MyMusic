@@ -6,9 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 
 // Importar pantallas
-import { HomeScreen, LibraryScreen, NowPlayingScreen, ProfileScreen, SearchScreen } from './screens';
-// Importar contextos
-import { MusicProvider } from './contexts/MusicContext';
+import { AudioTestScreen, HomeScreen, LibraryScreen, NowPlayingScreen, ProfileScreen, SearchScreen } from './screens';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -65,21 +63,29 @@ function TabNavigator() {
 
 export default function App() {
   return (
-    <MusicProvider>
-      <NavigationContainer>
-        <StatusBar style="light" />
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Main" component={TabNavigator} />
-          <Stack.Screen
-            name="NowPlaying"
-            component={NowPlayingScreen}
-            options={{
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
-            }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </MusicProvider>
+    <NavigationContainer>
+      <StatusBar style="light" />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Main" component={TabNavigator} />
+        <Stack.Screen 
+          name="AudioTest" 
+          component={AudioTestScreen}
+          options={{
+            headerShown: true,
+            title: 'Prueba de Audio',
+            headerStyle: { backgroundColor: '#1a1a1a' },
+            headerTintColor: '#fff',
+          }}
+        />
+        <Stack.Screen 
+          name="NowPlaying" 
+          component={NowPlayingScreen}
+          options={{
+            headerShown: false,
+            presentation: 'modal',
+          }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }

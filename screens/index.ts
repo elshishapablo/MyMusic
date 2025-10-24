@@ -1,3 +1,4 @@
+export { default as AudioTestScreen } from './AudioTestScreen';
 export { default as HomeScreen } from './HomeScreen';
 export { default as LibraryScreen } from './LibraryScreen';
 export { default as NowPlayingScreen } from './NowPlayingScreen';

@@ -1,8 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
     Dimensions,
     Image,
     ScrollView,
@@ -12,7 +10,6 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { useMusic } from '../contexts/MusicContext';
 
 const { width } = Dimensions.get('window');
 
@@ -85,69 +82,25 @@ export default function SearchScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  
-  const { state, searchTracks, playTrack } = useMusic();
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = (query: string) => {
     setSearchQuery(query);
     setIsSearching(query.length > 0);
     
     if (query.length > 0) {
-      try {
-        const results = await searchTracks(query);
-        setSearchResults(results);
-      } catch (error) {
-        console.error('Error searching:', error);
-        Alert.alert('Error', 'No se pudo realizar la búsqueda. Verifica tu conexión a internet.');
-      }
+      // Datos de ejemplo para búsqueda
+      const exampleResults = [
+        { id: '1', title: 'Shape of You', artist: 'Ed Sheeran', album: '÷ (Divide)', image: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=SO' },
+        { id: '2', title: 'Perfect', artist: 'Ed Sheeran', album: '÷ (Divide)', image: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=P' },
+        { id: '3', title: 'Thinking Out Loud', artist: 'Ed Sheeran', album: 'x', image: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=TOL' },
+      ];
+      setSearchResults(exampleResults);
     } else {
       setSearchResults([]);
     }
   };
 
-  // Búsqueda en tiempo real con debounce
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchQuery.length > 2) {
-        handleSearch(searchQuery);
-      }
-    }, 500); // Debounce de 500ms
-
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
-
-  const handlePlayTrack = async (track: any) => {
-    // Validar que el track existe
-    if (!track) {
-      console.log('Track no válido');
-      return;
-    }
-
-    try {
-      console.log('Reproduciendo:', track.title, 'de', track.artist);
-      
-      // Actualizar estado global
-      playTrack(track);
-      
-      // Navegar directamente a la pantalla de reproducción
-      navigation.navigate('NowPlaying');
-      
-    } catch (error) {
-      console.error('Error playing track:', error);
-      Alert.alert('Error', 'No se pudo reproducir la canción.');
-    }
-  };
-
   const renderSearchResults = () => {
-    if (state.isLoading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#20B2AA" />
-          <Text style={styles.loadingText}>Buscando música...</Text>
-        </View>
-      );
-    }
-
     return (
       <View style={styles.resultsContainer}>
         <Text style={styles.resultsTitle}>Resultados para "{searchQuery}"</Text>
@@ -160,22 +113,15 @@ export default function SearchScreen({ navigation }: any) {
         ) : (
           searchResults.map((result, index) => (
             <TouchableOpacity
-              key={result.id || index}
+              key={`search_${result.id}_${index}`}
               style={styles.resultItem}
-              onPress={() => handlePlayTrack(result)}
             >
               <Image source={{ uri: result.image }} style={styles.trackImage} />
               <View style={styles.trackInfo}>
                 <Text style={styles.trackTitle}>{result.title}</Text>
                 <Text style={styles.trackArtist}>{result.artist} • {result.album}</Text>
-                <Text style={styles.trackStats}>
-                  Popularidad: {result.playCount}/100 • {result.year}
-                </Text>
               </View>
               <View style={styles.trackActions}>
-                <Text style={styles.trackDuration}>
-                  {Math.floor((result.duration || 0) / 60)}:{((result.duration || 0) % 60).toString().padStart(2, '0')}
-                </Text>
                 <TouchableOpacity style={styles.playButton}>
                   <Ionicons name="play" size={20} color="#1DB954" />
                 </TouchableOpacity>

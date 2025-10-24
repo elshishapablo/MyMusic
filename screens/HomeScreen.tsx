@@ -1,8 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
-    ActivityIndicator,
-    Alert,
     Dimensions,
     Image,
     ScrollView,
@@ -12,7 +10,6 @@ import {
     View,
 } from 'react-native';
 import { CustomButton } from '../components/CustomButton';
-import { useMusic } from '../contexts/MusicContext';
 
 const { width } = Dimensions.get('window');
 
@@ -49,60 +46,50 @@ const quickAccess = [
 ];
 
 export default function HomeScreen({ navigation }: any) {
-  const { getPopularTracks, getTracksByGenre, playTrack, state } = useMusic();
-  const [popularTracks, setPopularTracks] = useState<any[]>([]);
-  const [electronicTracks, setElectronicTracks] = useState<any[]>([]);
-  const [hipHopTracks, setHipHopTracks] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadHomeData();
-  }, []);
-
-  const loadHomeData = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Cargar canciones populares
-      const popular = await getPopularTracks();
-      setPopularTracks(popular.slice(0, 6));
-      
-      // Cargar música electrónica
-      const electronic = await getTracksByGenre('Electronic');
-      setElectronicTracks(electronic.slice(0, 4));
-      
-      // Cargar hip hop
-      const hipHop = await getTracksByGenre('Hip Hop');
-      setHipHopTracks(hipHop.slice(0, 4));
-      
-    } catch (error) {
-      console.error('Error loading home data:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  // Función para manejar el clic en Don't Cry
+  const handleDontCryPress = () => {
+    navigation.navigate('NowPlaying');
   };
 
-  const handlePlayTrack = async (track: any) => {
-    // Validar que el track existe
-    if (!track) {
-      console.log('Track no válido');
-      return;
-    }
+  // Datos de ejemplo estáticos
+  const popularTracks = [
+    { id: '1', title: 'Shape of You', artist: 'Ed Sheeran', image: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=SO' },
+    { id: '2', title: 'Blinding Lights', artist: 'The Weeknd', image: 'https://via.placeholder.com/300x300/FF6B6B/FFFFFF?text=BL' },
+    { id: '3', title: 'Bad Guy', artist: 'Billie Eilish', image: 'https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=BG' },
+    { id: '4', title: 'Watermelon Sugar', artist: 'Harry Styles', image: 'https://via.placeholder.com/300x300/FFD700/FFFFFF?text=WS' },
+    { id: '5', title: 'Levitating', artist: 'Dua Lipa', image: 'https://via.placeholder.com/300x300/9B59B6/FFFFFF?text=L' },
+    { id: '6', title: 'Stay', artist: 'The Kid LAROI', image: 'https://via.placeholder.com/300x300/FF6347/FFFFFF?text=S' },
+  ];
 
-    try {
-      console.log('Reproduciendo:', track.title, 'de', track.artist);
-      
-      // Actualizar estado global
-      playTrack(track);
-      
-      // Navegar directamente a la pantalla de reproducción
-      navigation.navigate('NowPlaying');
-      
-    } catch (error) {
-      console.error('Error playing track:', error);
-      Alert.alert('Error', 'No se pudo reproducir la canción.');
-    }
+  // Canción especial de Don't Cry
+  const dontCryTrack = {
+    id: 'dont-cry',
+    title: "Don't Cry",
+    artist: 'Guns N\' Roses',
+    image: require('../assets/images/dont_cry.jpg'),
+    isLocal: true
   };
+
+  const userTopTracks = [
+    { id: '1', title: 'Bohemian Rhapsody', artist: 'Queen', image: 'https://via.placeholder.com/300x300/FF6B6B/FFFFFF?text=BR' },
+    { id: '2', title: 'Imagine', artist: 'John Lennon', image: 'https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=I' },
+    { id: '3', title: 'Hotel California', artist: 'Eagles', image: 'https://via.placeholder.com/300x300/FFD700/FFFFFF?text=HC' },
+    { id: '4', title: 'Sweet Child O\' Mine', artist: 'Guns N\' Roses', image: 'https://via.placeholder.com/300x300/FF6347/FFFFFF?text=SCO' },
+  ];
+
+  const electronicTracks = [
+    { id: '1', title: 'Strobe', artist: 'Deadmau5', image: 'https://via.placeholder.com/300x300/9B59B6/FFFFFF?text=S' },
+    { id: '2', title: 'Levels', artist: 'Avicii', image: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=L' },
+    { id: '3', title: 'Titanium', artist: 'David Guetta', image: 'https://via.placeholder.com/300x300/FF6B6B/FFFFFF?text=T' },
+    { id: '4', title: 'Animals', artist: 'Martin Garrix', image: 'https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=A' },
+  ];
+
+  const hipHopTracks = [
+    { id: '1', title: 'Lose Yourself', artist: 'Eminem', image: 'https://via.placeholder.com/300x300/FF6347/FFFFFF?text=LY' },
+    { id: '2', title: 'In Da Club', artist: '50 Cent', image: 'https://via.placeholder.com/300x300/FFD700/FFFFFF?text=IDC' },
+    { id: '3', title: 'Hotline Bling', artist: 'Drake', image: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=HB' },
+    { id: '4', title: 'Sicko Mode', artist: 'Travis Scott', image: 'https://via.placeholder.com/300x300/9B59B6/FFFFFF?text=SM' },
+  ];
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header con saludo */}
@@ -131,89 +118,100 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       </View>
 
-             {/* Canciones populares de Spotify */}
-             <View style={styles.section}>
-               <Text style={styles.sectionTitle}>🔥 Tendencias en Spotify</Text>
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#20B2AA" />
-            <Text style={styles.loadingText}>Cargando música...</Text>
-          </View>
-        ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {popularTracks.map((track) => (
-              <TouchableOpacity 
-                key={track.id} 
-                style={styles.trackCard}
-                onPress={() => handlePlayTrack(track)}
+            {/* Canción especial Don't Cry */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>🎸 Tu Canción Local</Text>
+              <TouchableOpacity
+                style={styles.specialTrackCard}
+                onPress={handleDontCryPress}
               >
-                <Image source={{ uri: track.image }} style={styles.trackImage} />
-                <Text style={styles.trackTitle}>{track.title}</Text>
-                <Text style={styles.trackArtist}>{track.artist}</Text>
-                       <Text style={styles.trackStats}>
-                         Popularidad: {track.playCount || 0}/100 • {track.year}
-                       </Text>
+                <Image source={{ uri: dontCryTrack.image }} style={styles.specialTrackImage} />
+                <View style={styles.specialTrackInfo}>
+                  <Text style={styles.specialTrackTitle}>{dontCryTrack.title}</Text>
+                  <Text style={styles.specialTrackArtist}>{dontCryTrack.artist}</Text>
+                  <Text style={styles.specialTrackSubtitle}>🎵 Archivo local • Toca para reproducir</Text>
+                </View>
+                <View style={styles.playIconContainer}>
+                  <Ionicons name="play-circle" size={40} color="#20B2AA" />
+                </View>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-      </View>
+            </View>
 
-      {/* Botón de reproducción actual */}
-      <View style={styles.nowPlayingContainer}>
-        <CustomButton
-          title="Continuar reproduciendo"
-          onPress={() => navigation.navigate('NowPlaying')}
-          style={styles.continueButton}
-        />
-      </View>
+            {/* Top tracks del usuario */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>🎵 Tu Música Favorita</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {userTopTracks.map((track, index) => (
+                  <TouchableOpacity
+                    key={`userTop_${track.id}_${index}`}
+                    style={styles.trackCard}
+                  >
+                    <Image source={{ uri: track.image }} style={styles.trackImage} />
+                    <Text style={styles.trackTitle}>{track.title}</Text>
+                    <Text style={styles.trackArtist}>{track.artist}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Canciones populares de Spotify */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>🔥 Tendencias en Spotify</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {popularTracks.map((track, index) => (
+                  <TouchableOpacity
+                    key={`popular_${track.id}_${index}`}
+                    style={styles.trackCard}
+                  >
+                    <Image source={{ uri: track.image }} style={styles.trackImage} />
+                    <Text style={styles.trackTitle}>{track.title}</Text>
+                    <Text style={styles.trackArtist}>{track.artist}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Botón de prueba de audio */}
+            <View style={styles.nowPlayingContainer}>
+              <CustomButton
+                title="Prueba de Audio Local"
+                onPress={() => navigation.navigate('AudioTest')}
+                style={styles.continueButton}
+              />
+            </View>
 
       {/* Música Electrónica */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>🎵 Electronic</Text>
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#20B2AA" />
-          </View>
-        ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {electronicTracks.map((track) => (
-              <TouchableOpacity 
-                key={track.id} 
-                style={styles.trackCard}
-                onPress={() => handlePlayTrack(track)}
-              >
-                <Image source={{ uri: track.image }} style={styles.trackImage} />
-                <Text style={styles.trackTitle}>{track.title}</Text>
-                <Text style={styles.trackArtist}>{track.artist}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {electronicTracks.map((track) => (
+            <TouchableOpacity 
+              key={track.id} 
+              style={styles.trackCard}
+            >
+              <Image source={{ uri: track.image }} style={styles.trackImage} />
+              <Text style={styles.trackTitle}>{track.title}</Text>
+              <Text style={styles.trackArtist}>{track.artist}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {/* Hip Hop */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>🎤 Hip Hop</Text>
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#20B2AA" />
-          </View>
-        ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {hipHopTracks.map((track) => (
-              <TouchableOpacity 
-                key={track.id} 
-                style={styles.trackCard}
-                onPress={() => handlePlayTrack(track)}
-              >
-                <Image source={{ uri: track.image }} style={styles.trackImage} />
-                <Text style={styles.trackTitle}>{track.title}</Text>
-                <Text style={styles.trackArtist}>{track.artist}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {hipHopTracks.map((track) => (
+            <TouchableOpacity 
+              key={track.id} 
+              style={styles.trackCard}
+            >
+              <Image source={{ uri: track.image }} style={styles.trackImage} />
+              <Text style={styles.trackTitle}>{track.title}</Text>
+              <Text style={styles.trackArtist}>{track.artist}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
     </ScrollView>
   );
@@ -370,5 +368,42 @@ const styles = StyleSheet.create({
   trackStats: {
     color: '#666',
     fontSize: 10,
+  },
+  // Estilos para la tarjeta especial de Don't Cry
+  specialTrackCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#333',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 10,
+  },
+  specialTrackImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 15,
+  },
+  specialTrackInfo: {
+    flex: 1,
+  },
+  specialTrackTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  specialTrackArtist: {
+    color: '#ccc',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  specialTrackSubtitle: {
+    color: '#20B2AA',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  playIconContainer: {
+    marginLeft: 10,
   },
 });
