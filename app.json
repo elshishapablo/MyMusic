@@ -1,24 +1,19 @@
 {
   "expo": {
-    "name": "MyProyect",
-    "slug": "MyProyect",
+    "name": "MyMusic",
+    "slug": "MyMusic",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myproyect",
+    "scheme": "mymusic",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
       "package": "com.miproyect.mymusicapp",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundImage": "./assets/images/icon.png",
-        "monochromeImage": "./assets/images/icon.png"
+        "foregroundImage": "./assets/images/icon.png"
       }
     },
     "web": {
@@ -36,12 +31,11 @@
             "backgroundColor": "#000000"
           }
         }
-      ],
-      "expo-asset"
+      ]
     ],
     "extra": {
       "eas": {
-        "projectId": "f002f96c-34e6-40e4-afa8-0bc92d4fc5fe"
+        "projectId": "a8a58022-843e-4810-a53e-de1854732303"
       }
     }
   }
