@@ -89,19 +89,28 @@ const MiniPlayer: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 80, // Posicionar por encima de la barra de tabs (60px + margen)
+    left: 15,
+    right: 15,
     backgroundColor: '#2a1a2a',
-    borderTopWidth: 1,
-    borderTopColor: '#FF6B9D',
-    paddingBottom: 34, // Para el safe area en iOS
+    borderRadius: 15,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 107, 157, 0.2)', // Borde más sutil y difuminado
+    shadowColor: '#FF6B9D',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8, // Para Android
+    zIndex: 1000,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   coverImage: {
     width: 50,

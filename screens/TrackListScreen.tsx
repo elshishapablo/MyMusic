@@ -79,6 +79,7 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
         keyExtractor={(item) => item.id}
         style={styles.trackList}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.trackListContent}
       />
     </SafeAreaView>
   );
@@ -106,6 +107,9 @@ const styles = StyleSheet.create({
   },
   trackList: {
     flex: 1,
+  },
+  trackListContent: {
+    paddingBottom: 120, // Espacio para el mini player flotante
   },
   trackItem: {
     flexDirection: 'row',
