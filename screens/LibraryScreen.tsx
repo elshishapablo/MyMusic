@@ -1,4 +1,4 @@
- import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
   Image,
@@ -9,6 +9,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { LocalSongList } from '../components/LocalSongList';
+import MiniPlayer from '../components/MiniPlayer';
+import { Colors, Shadows } from '../constants/Colors';
+import { localSongs, searchLocalSongs } from '../data/localMusic';
+import { useAudioPlayer } from '../hooks/useAudioPlayer';
 // Datos de ejemplo para la biblioteca
 const demoPlaylists = [
   {
@@ -152,18 +157,75 @@ const librarySections = [
   { title: 'Playlists', icon: 'list', count: userPlaylists.length },
   { title: 'Álbumes', icon: 'albums', count: recentAlbums.length },
   { title: 'Artistas', icon: 'people', count: 45 },
-  { title: 'Canciones', icon: 'musical-notes', count: 234 },
+  { title: 'Canciones Locales', icon: 'musical-notes', count: localSongs.length },
   { title: 'Descargadas', icon: 'download', count: 12 },
   { title: 'Historial', icon: 'time', count: 89 },
 ];
 
-export default function LibraryScreen() {
+export default function LibraryScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSection, setSelectedSection] = useState('Playlists');
   const [userPlaylistsData] = useState(demoPlaylists);
   const [userAlbumsData] = useState(demoAlbums);
   const [userArtistsData] = useState(demoArtists);
   const [userSongsData] = useState(demoMusic);
+  
+  const { 
+    playSong, 
+    currentSong, 
+    isPlaying, 
+    isMiniPlayerVisible, 
+    togglePlayPause, 
+    hideMiniPlayer 
+  } = useAudioPlayer();
+
+  // Función para manejar el clic en una canción local
+  const handleLocalSongPress = async (song: any) => {
+    // Solo navegar al reproductor
+    navigation.navigate('NowPlaying', {
+      song: song
+    });
+  };
+
+  // Función para manejar el clic en el botón de play
+  const handlePlayPress = async (song: any) => {
+    // Si es la misma canción que ya está reproduciendo, solo navegar
+    if (currentSong?.id === song.id && isPlaying) {
+      navigation.navigate('NowPlaying', {
+        song: song
+      });
+      return;
+    }
+    
+    // Si es una canción diferente, reproducir y navegar
+    await playSong(song);
+    navigation.navigate('NowPlaying', {
+      song: song
+    });
+  };
+
+  // Función para navegar al reproductor completo desde el mini-player
+  const handleMiniPlayerPress = () => {
+    if (currentSong) {
+      navigation.navigate('NowPlaying', {
+        song: currentSong
+      });
+    }
+  };
+
+  // Funciones placeholder para los controles del mini-player
+  const handleNext = () => {
+    console.log('Siguiente canción');
+  };
+
+  const handlePrevious = () => {
+    console.log('Canción anterior');
+  };
+
+  // Filtrar canciones locales según la búsqueda
+  const filteredLocalSongs = searchQuery 
+    ? searchLocalSongs(searchQuery)
+    : localSongs;
 
   const renderPlaylists = () => (
     <View style={styles.contentSection}>
@@ -250,7 +312,11 @@ export default function LibraryScreen() {
       </ScrollView>
 
       {/* Contenido según la sección seleccionada */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={isMiniPlayerVisible ? styles.scrollContentWithMiniPlayer : styles.scrollContent}
+      >
         {selectedSection === 'Playlists' && renderPlaylists()}
         {selectedSection === 'Álbumes' && renderAlbums()}
         
@@ -260,12 +326,29 @@ export default function LibraryScreen() {
           </View>
         )}
         
-        {selectedSection === 'Canciones' && (
+        {selectedSection === 'Canciones Locales' && (
           <View style={styles.contentSection}>
-            <Text style={styles.emptyText}>Tus canciones aparecerán aquí</Text>
+            {filteredLocalSongs.length > 0 ? (
+              <LocalSongList
+                songs={filteredLocalSongs}
+                onSongPress={handleLocalSongPress}
+                currentPlayingSongId={currentSong?.id}
+                showAlbumArt={true}
+                showDuration={true}
+              />
+            ) : (
+              <Text style={styles.emptyText}>
+                {searchQuery ? 'No se encontraron canciones' : 'No tienes canciones locales'}
+              </Text>
+            )}
           </View>
         )}
       </ScrollView>
+
+      {/* Mini Player */}
+      {isMiniPlayerVisible && (
+        <MiniPlayer />
+      )}
     </View>
   );
 }
@@ -273,34 +356,48 @@ export default function LibraryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  scrollContentWithMiniPlayer: {
+    paddingBottom: 120, // Espacio para el mini-player
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#333',
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 25,
     paddingHorizontal: 15,
     marginRight: 15,
+    ...Shadows.small,
   },
   searchIcon: {
     marginRight: 10,
+    color: Colors.textSecondary,
   },
   searchInput: {
     flex: 1,
-    color: '#fff',
+    color: Colors.text,
     fontSize: 16,
     paddingVertical: 12,
   },
   sortButton: {
     padding: 8,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    ...Shadows.small,
   },
   sectionsContainer: {
     paddingHorizontal: 20,
@@ -309,26 +406,28 @@ const styles = StyleSheet.create({
   sectionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#333',
+    backgroundColor: Colors.surfaceSecondary,
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 20,
     marginRight: 10,
+    ...Shadows.small,
   },
   selectedSectionButton: {
-    backgroundColor: '#20B2AA',
+    backgroundColor: Colors.primary,
+    ...Shadows.glow,
   },
   sectionText: {
-    color: '#ccc',
+    color: Colors.textSecondary,
     marginLeft: 8,
     fontSize: 14,
     fontWeight: '500',
   },
   selectedSectionText: {
-    color: '#fff',
+    color: Colors.text,
   },
   sectionCount: {
-    color: '#888',
+    color: Colors.textTertiary,
     marginLeft: 5,
     fontSize: 12,
   },
@@ -343,7 +442,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: Colors.border,
   },
   playlistImage: {
     width: 50,
@@ -355,13 +454,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   playlistName: {
-    color: '#fff',
+    color: Colors.text,
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 4,
   },
   playlistDetails: {
-    color: '#888',
+    color: Colors.textTertiary,
     fontSize: 14,
   },
   albumItem: {
@@ -369,7 +468,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: Colors.border,
   },
   albumImage: {
     width: 50,
@@ -381,20 +480,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   albumTitle: {
-    color: '#fff',
+    color: Colors.text,
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 4,
   },
   albumArtist: {
-    color: '#888',
+    color: Colors.textTertiary,
     fontSize: 14,
   },
   moreButton: {
     padding: 8,
+    borderRadius: 15,
+    backgroundColor: Colors.surfaceSecondary,
   },
   emptyText: {
-    color: '#888',
+    color: Colors.textSecondary,
     textAlign: 'center',
     fontSize: 16,
     marginTop: 50,

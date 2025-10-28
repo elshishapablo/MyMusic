@@ -10,6 +10,9 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { MiniPlayer } from '../components/MiniPlayer';
+import { Colors, Shadows } from '../constants/Colors';
+import { useAudioPlayer } from '../hooks/useAudioPlayer';
 
 const { width } = Dimensions.get('window');
 
@@ -19,12 +22,12 @@ const trendingSearches = [
 ];
 
 const categories = [
-  { title: 'Pop', color: '#FF6B6B', icon: 'musical-notes' },
-  { title: 'Rock', color: '#4ECDC4', icon: 'guitar' },
-  { title: 'Hip Hop', color: '#45B7D1', icon: 'mic' },
-  { title: 'Jazz', color: '#96CEB4', icon: 'piano' },
-  { title: 'Clásica', color: '#FECA57', icon: 'musical-note' },
-  { title: 'Electrónica', color: '#FF9FF3', icon: 'radio' },
+  { title: 'Pop', color: Colors.primary, icon: 'musical-notes' },
+  { title: 'Rock', color: Colors.accent, icon: 'guitar' },
+  { title: 'Hip Hop', color: Colors.secondary, icon: 'mic' },
+  { title: 'Jazz', color: Colors.primaryLight, icon: 'piano' },
+  { title: 'Clásica', color: Colors.accentLight, icon: 'musical-note' },
+  { title: 'Electrónica', color: Colors.secondaryLight, icon: 'radio' },
 ];
 
 const featuredPlaylists = [
@@ -83,6 +86,14 @@ export default function SearchScreen({ navigation }: any) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
+  const { 
+    currentSong, 
+    isPlaying, 
+    isMiniPlayerVisible, 
+    togglePlayPause, 
+    hideMiniPlayer 
+  } = useAudioPlayer();
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setIsSearching(query.length > 0);
@@ -107,7 +118,7 @@ export default function SearchScreen({ navigation }: any) {
 
         {searchResults.length === 0 ? (
           <View style={styles.emptyResults}>
-            <Ionicons name="search" size={48} color="#666" />
+            <Ionicons name="search" size={48} color={Colors.textTertiary} />
             <Text style={styles.emptyText}>No se encontraron resultados</Text>
           </View>
         ) : (
@@ -123,7 +134,7 @@ export default function SearchScreen({ navigation }: any) {
               </View>
               <View style={styles.trackActions}>
                 <TouchableOpacity style={styles.playButton}>
-                  <Ionicons name="play" size={20} color="#1DB954" />
+                  <Ionicons name="play" size={20} color={Colors.text} />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -145,7 +156,7 @@ export default function SearchScreen({ navigation }: any) {
               style={styles.trendingItem}
               onPress={() => handleSearch(search)}
             >
-              <Ionicons name="trending-up" size={16} color="#1DB954" />
+              <Ionicons name="trending-up" size={16} color={Colors.primary} />
               <Text style={styles.trendingText}>{search}</Text>
             </TouchableOpacity>
           ))}
@@ -164,7 +175,7 @@ export default function SearchScreen({ navigation }: any) {
                 onPress={() => handleSearch(genre)}
               >
                 <View style={styles.genreIcon}>
-                  <Ionicons name="musical-notes" size={24} color="#fff" />
+                  <Ionicons name="musical-notes" size={24} color={Colors.text} />
                 </View>
                 <Text style={styles.genreName}>{genre}</Text>
               </TouchableOpacity>
@@ -173,29 +184,6 @@ export default function SearchScreen({ navigation }: any) {
         </ScrollView>
       </View>
 
-      {/* Spotify destacado */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Spotify</Text>
-        <View style={styles.spotifyInfo}>
-          <Ionicons name="logo-spotify" size={48} color="#1DB954" />
-          <Text style={styles.spotifyTitle}>Descubre música con derechos</Text>
-          <Text style={styles.spotifySubtitle}>
-            Millones de canciones oficiales de artistas reconocidos
-          </Text>
-          <View style={styles.demoInfo}>
-            <Ionicons name="information-circle" size={20} color="#FFA500" />
-            <Text style={styles.demoText}>
-              Modo Demo: Configura Spotify para reproducción real
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.exploreButton}
-            onPress={() => handleSearch('popular')}
-          >
-            <Text style={styles.exploreButtonText}>Explorar Música</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
     </ScrollView>
   );
 
@@ -204,18 +192,18 @@ export default function SearchScreen({ navigation }: any) {
       {/* Barra de búsqueda */}
       <View style={styles.searchHeader}>
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <Ionicons name="search" size={20} color={Colors.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="¿Qué quieres escuchar?"
-            placeholderTextColor="#666"
+            placeholderTextColor={Colors.textTertiary}
             value={searchQuery}
             onChangeText={handleSearch}
             autoFocus={false}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => handleSearch('')}>
-              <Ionicons name="close-circle" size={20} color="#666" />
+              <Ionicons name="close-circle" size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -223,6 +211,19 @@ export default function SearchScreen({ navigation }: any) {
 
       {/* Contenido */}
       {isSearching ? renderSearchResults() : renderBrowseContent()}
+
+      {/* Mini Player */}
+      {isMiniPlayerVisible && (
+        <MiniPlayer
+          song={currentSong}
+          isPlaying={isPlaying}
+          onPress={() => navigation.navigate('NowPlaying', { song: currentSong })}
+          onPlayPause={togglePlayPause}
+          onNext={() => {}}
+          onPrevious={() => {}}
+          onClose={hideMiniPlayer}
+        />
+      )}
     </View>
   );
 }
@@ -230,25 +231,30 @@ export default function SearchScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: Colors.background,
   },
   searchHeader: {
     paddingHorizontal: 20,
     paddingVertical: 15,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#333',
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 25,
     paddingHorizontal: 15,
+    ...Shadows.small,
   },
   searchIcon: {
     marginRight: 10,
+    color: Colors.textSecondary,
   },
   searchInput: {
     flex: 1,
-    color: '#fff',
+    color: Colors.text,
     fontSize: 16,
     paddingVertical: 12,
   },
@@ -259,7 +265,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.text,
     marginBottom: 15,
   },
   trendingContainer: {
@@ -269,60 +275,47 @@ const styles = StyleSheet.create({
   trendingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#333',
+    backgroundColor: Colors.surfaceSecondary,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 15,
     marginRight: 10,
     marginBottom: 10,
+    ...Shadows.small,
   },
   trendingText: {
-    color: '#fff',
+    color: Colors.text,
     marginLeft: 6,
     fontSize: 14,
   },
-  categoriesGrid: {
+  genresContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    paddingHorizontal: 20,
   },
-  categoryCard: {
-    width: (width - 60) / 2,
+  genreCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 15,
+    marginRight: 15,
     alignItems: 'center',
-    marginBottom: 20,
+    minWidth: 100,
+    ...Shadows.small,
   },
-  categoryIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  genreIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    ...Shadows.medium,
   },
-  categoryTitle: {
-    color: '#fff',
+  genreName: {
+    color: Colors.text,
     fontSize: 14,
+    fontWeight: '500',
     textAlign: 'center',
-  },
-  playlistCard: {
-    width: 150,
-    marginRight: 15,
-  },
-  playlistImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  playlistTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  playlistSubtitle: {
-    color: '#ccc',
-    fontSize: 14,
   },
   resultsContainer: {
     paddingHorizontal: 20,
@@ -330,7 +323,7 @@ const styles = StyleSheet.create({
   resultsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.text,
     marginBottom: 20,
   },
   resultItem: {
@@ -338,143 +331,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  songInfo: {
-    flex: 1,
-  },
-  songTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  songArtist: {
-    color: '#888',
-    fontSize: 14,
-  },
-  songDuration: {
-    color: '#888',
-    fontSize: 14,
-  },
-  artistImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 15,
-  },
-  artistInfo: {
-    flex: 1,
-  },
-  artistName: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  artistFollowers: {
-    color: '#888',
-    fontSize: 14,
-  },
-  albumImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: 15,
-  },
-  albumInfo: {
-    flex: 1,
-  },
-  albumTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  albumArtist: {
-    color: '#888',
-    fontSize: 14,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 50,
-  },
-  loadingText: {
-    color: '#ccc',
-    marginTop: 10,
-    fontSize: 16,
-  },
-  loginContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 50,
-  },
-  loginTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: 20,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  loginSubtitle: {
-    fontSize: 16,
-    color: '#ccc',
-    textAlign: 'center',
-    marginBottom: 30,
-    lineHeight: 22,
-  },
-  loginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1DB954',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-  },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  searchTypeContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    backgroundColor: '#333',
-    borderRadius: 25,
-    padding: 4,
-  },
-  searchTypeButton: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    alignItems: 'center',
-  },
-  activeSearchType: {
-    backgroundColor: '#20B2AA',
-  },
-  searchTypeText: {
-    color: '#ccc',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  activeSearchTypeText: {
-    color: '#fff',
-  },
-  emptyResults: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    color: '#888',
-    fontSize: 16,
-    marginTop: 10,
+    borderBottomColor: Colors.border,
   },
   trackImage: {
     width: 50,
@@ -486,92 +343,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   trackTitle: {
-    color: '#fff',
+    color: Colors.text,
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 4,
   },
   trackArtist: {
-    color: '#888',
+    color: Colors.textTertiary,
     fontSize: 14,
-  },
-  trackDuration: {
-    color: '#888',
-    fontSize: 14,
-    minWidth: 40,
-    textAlign: 'right',
-  },
-  albumTracks: {
-    color: '#666',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  artistGenres: {
-    color: '#666',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  trackStats: {
-    color: '#888',
-    fontSize: 12,
-    marginTop: 2,
   },
   trackActions: {
     alignItems: 'flex-end',
   },
   playButton: {
     marginTop: 5,
-    padding: 5,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    ...Shadows.small,
   },
-  artistStats: {
-    color: '#888',
-    fontSize: 12,
-    marginTop: 2,
+  emptyResults: {
+    alignItems: 'center',
+    paddingVertical: 40,
   },
-        spotifyInfo: {
-          alignItems: 'center',
-          paddingVertical: 30,
-          paddingHorizontal: 20,
-        },
-        spotifyTitle: {
-          fontSize: 20,
-          fontWeight: 'bold',
-          color: '#fff',
-          marginTop: 15,
-          marginBottom: 8,
-          textAlign: 'center',
-        },
-        spotifySubtitle: {
-          fontSize: 14,
-          color: '#ccc',
-          textAlign: 'center',
-          marginBottom: 20,
-          lineHeight: 20,
-        },
-        exploreButton: {
-          backgroundColor: '#1DB954',
-          paddingHorizontal: 20,
-          paddingVertical: 10,
-          borderRadius: 20,
-        },
-        exploreButtonText: {
-          color: '#fff',
-          fontSize: 16,
-          fontWeight: 'bold',
-        },
-        demoInfo: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: '#2A2A2A',
-          paddingHorizontal: 15,
-          paddingVertical: 8,
-          borderRadius: 20,
-          marginBottom: 15,
-        },
-        demoText: {
-          color: '#FFA500',
-          fontSize: 12,
-          marginLeft: 8,
-          textAlign: 'center',
-        },
+  emptyText: {
+    color: Colors.textSecondary,
+    fontSize: 16,
+    marginTop: 10,
+  },
 });

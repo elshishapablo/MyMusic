@@ -1,297 +1,203 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
-    Alert,
     Dimensions,
     Image,
     SafeAreaView,
-    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useAudio } from '../contexts/AudioProvider';
 
 const { width, height } = Dimensions.get('window');
 
-export default function NowPlayingScreen({ navigation, route }: any) {
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentTime, setCurrentTime] = useState('0:00');
-  const [totalTime, setTotalTime] = useState('3:53');
-  const [progress, setProgress] = useState(0); // Progreso de 0 a 1
-  const [isShuffled, setIsShuffled] = useState(false);
-  const [isRepeating, setIsRepeating] = useState(false);
+const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const { currentTrack, isPlaying, playbackTime, togglePlayPause, skipToNext, seekTo, setNowPlayingScreenVisible } = useAudio();
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPosition, setDragPosition] = useState(0);
 
-  // Datos de la canción actual (pueden venir del route.params)
-  const currentSong = route?.params?.song || {
-    title: "Don't Cry",
-    artist: 'Guns N\' Roses',
-    album: 'Use Your Illusion I',
-    image: require('../assets/images/dont_cry.jpg'),
-    duration: '3:53'
+  if (!currentTrack) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No hay canción seleccionada</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const formatTime = (milliseconds: number): string => {
+    const minutes = Math.floor(milliseconds / 60000);
+    const seconds = Math.floor((milliseconds % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Próximas canciones
-  const upcomingSongs = [
-    { title: 'Save Your Tears', artist: 'The Weeknd', duration: '3:35' },
-    { title: 'In Your Eyes', artist: 'The Weeknd', duration: '3:58' },
-    { title: 'Blinding Lights', artist: 'The Weeknd', duration: '3:20' },
-  ];
+  const handleSeek = (position: number) => {
+    const seekTime = (position / 100) * (currentTrack.duration || 240000); // 4 min default
+    seekTo(seekTime);
+  };
 
-  // Función para cargar y reproducir el audio
-  const loadAndPlayAudio = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Si ya hay un sonido cargado, lo liberamos primero
-      if (sound) {
-        await sound.unloadAsync();
-        setSound(null);
-      }
-
-      // Cargar el archivo MP3 local
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        require('../assets/audio/dont_cry.mp3')
-      );
-
-      setSound(newSound);
-
-      // Configurar el callback cuando termine la reproducción
-      newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded) {
-          if (status.didJustFinish) {
-            setIsPlaying(false);
-            // Si está en modo repeat, reiniciar
-            if (isRepeating) {
-              newSound.setPositionAsync(0);
-              newSound.playAsync();
-              setIsPlaying(true);
-            }
-          }
-          
-          // Actualizar tiempo actual y progreso
-          if (status.positionMillis !== undefined && status.durationMillis !== undefined) {
-            const minutes = Math.floor(status.positionMillis / 60000);
-            const seconds = Math.floor((status.positionMillis % 60000) / 1000);
-            setCurrentTime(`${minutes}:${seconds.toString().padStart(2, '0')}`);
-            
-            // Calcular progreso (0 a 1)
-            const progressValue = status.positionMillis / status.durationMillis;
-            setProgress(progressValue);
-            
-            // Actualizar tiempo total si no está establecido
-            if (totalTime === '3:53') {
-              const totalMinutes = Math.floor(status.durationMillis / 60000);
-              const totalSeconds = Math.floor((status.durationMillis % 60000) / 1000);
-              setTotalTime(`${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`);
-            }
-          }
-        }
-      });
-
-      // Reproducir el audio
-      await newSound.playAsync();
-      setIsPlaying(true);
-
-    } catch (error) {
-      console.error('Error playing audio:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      Alert.alert('Error', `No se pudo reproducir el audio: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
+  // Calcular el porcentaje de progreso
+  const getProgressPercentage = () => {
+    if (!currentTrack?.duration) return 0;
+    const duration = typeof currentTrack.duration === 'string' 
+      ? parseDuration(currentTrack.duration) 
+      : currentTrack.duration;
+    
+    // Si estamos arrastrando, usar la posición de arrastre
+    if (isDragging) {
+      return Math.min(Math.max(dragPosition, 0), 100);
     }
+    
+    return Math.min((playbackTime / duration) * 100, 100);
   };
 
-  const togglePlayPause = async () => {
-    if (!sound) {
-      await loadAndPlayAudio();
-      return;
-    }
-
-    try {
-      if (isPlaying) {
-        await sound.pauseAsync();
-        setIsPlaying(false);
-      } else {
-        await sound.playAsync();
-        setIsPlaying(true);
-      }
-    } catch (error) {
-      console.error('Error toggling playback:', error);
-      Alert.alert('Error', 'No se pudo controlar la reproducción');
-    }
+  // Función para parsear duración en formato "4:00" a milisegundos
+  const parseDuration = (duration: string): number => {
+    const parts = duration.split(':');
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    return (minutes * 60 + seconds) * 1000;
   };
 
-  const toggleShuffle = () => {
-    setIsShuffled(!isShuffled);
+  const handleClose = () => {
+    setNowPlayingScreenVisible(false);
+    navigation.goBack();
   };
 
-  const toggleRepeat = () => {
-    setIsRepeating(!isRepeating);
+  // Manejar el inicio del arrastre
+  const handlePanStart = (event: any) => {
+    setIsDragging(true);
+    const { locationX } = event.nativeEvent;
+    const progressBarWidth = width - 120; // Ancho aproximado de la barra
+    const percentage = (locationX / progressBarWidth) * 100;
+    setDragPosition(Math.min(Math.max(percentage, 0), 100));
   };
 
-  // Función para saltar a una posición específica
-  const seekToPosition = async (position: number) => {
-    if (!sound) return;
-
-    try {
-      const duration = await sound.getStatusAsync();
-      if (duration.isLoaded && duration.durationMillis) {
-        const targetPosition = position * duration.durationMillis;
-        await sound.setPositionAsync(targetPosition);
-      }
-    } catch (error) {
-      console.error('Error seeking:', error);
-    }
+  // Manejar el movimiento durante el arrastre
+  const handlePanMove = (event: any) => {
+    if (!isDragging) return;
+    const { locationX } = event.nativeEvent;
+    const progressBarWidth = width - 120; // Ancho aproximado de la barra
+    const percentage = (locationX / progressBarWidth) * 100;
+    setDragPosition(Math.min(Math.max(percentage, 0), 100));
   };
 
-  // Limpiar recursos cuando el componente se desmonte
-  useEffect(() => {
-    return () => {
-      if (sound) {
-        sound.unloadAsync().catch(console.error);
-      }
-    };
-  }, [sound]);
-
-  // Cargar audio automáticamente cuando se abre la pantalla
-  useEffect(() => {
-    loadAndPlayAudio();
-  }, []);
+  // Manejar el final del arrastre
+  const handlePanEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const duration = typeof currentTrack.duration === 'string' 
+      ? parseDuration(currentTrack.duration) 
+      : currentTrack.duration;
+    const seekTime = (dragPosition / 100) * duration;
+    seekTo(seekTime);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={handleClose}>
           <Ionicons name="chevron-down" size={24} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerText}>Reproduciendo desde</Text>
-          <Text style={styles.headerSubtext}>Tu biblioteca</Text>
+          <Text style={styles.headerSubtext}>Mi Biblioteca</Text>
         </View>
         <TouchableOpacity>
           <Ionicons name="ellipsis-horizontal" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Album Art */}
+      <View style={styles.content}>
+        {/* Carátula */}
         <View style={styles.albumContainer}>
-          <Image source={currentSong.image} style={styles.albumArt} />
+          <Image source={currentTrack.coverImage} style={styles.albumArt} />
         </View>
 
-        {/* Song Info */}
+        {/* Información de la canción */}
         <View style={styles.songInfo}>
-          <Text style={styles.songTitle}>{currentSong.title}</Text>
-          <Text style={styles.artistName}>{currentSong.artist}</Text>
-          {isLoading && (
-            <Text style={styles.loadingText}>Cargando audio...</Text>
-          )}
+          <Text style={styles.songTitle}>{currentTrack.title}</Text>
+          <Text style={styles.songArtist}>{currentTrack.artist}</Text>
+          <Text style={styles.songAlbum}>{currentTrack.album}</Text>
         </View>
 
-        {/* Progress Bar */}
+        {/* Barra de progreso */}
         <View style={styles.progressContainer}>
-          <Text style={styles.timeText}>{currentTime}</Text>
+          <Text style={styles.timeText}>
+            {isDragging 
+              ? formatTime((dragPosition / 100) * (typeof currentTrack.duration === 'string' 
+                  ? parseDuration(currentTrack.duration) 
+                  : currentTrack.duration || 240000))
+              : formatTime(playbackTime)
+            }
+          </Text>
           <TouchableOpacity 
             style={styles.progressBar}
-            onPress={(event) => {
-              const { locationX } = event.nativeEvent;
-              const barWidth = width - 120; // Aproximadamente el ancho de la barra
-              const newProgress = Math.max(0, Math.min(1, locationX / barWidth));
-              seekToPosition(newProgress);
-            }}
-            activeOpacity={0.8}
+            onPressIn={handlePanStart}
+            onPressOut={handlePanEnd}
+            activeOpacity={1}
           >
-            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-            <View style={[styles.progressThumb, { left: `${progress * 100}%` }]} />
-          </TouchableOpacity>
-          <Text style={styles.timeText}>{totalTime}</Text>
-        </View>
-
-        {/* Main Controls */}
-        <View style={styles.mainControls}>
-          <TouchableOpacity onPress={toggleShuffle} style={styles.controlButton}>
-            <Ionicons 
-              name="shuffle" 
-              size={24} 
-              color={isShuffled ? '#20B2AA' : '#ccc'} 
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${getProgressPercentage()}%` }
+              ]} 
             />
           </TouchableOpacity>
+          <Text style={styles.timeText}>
+            {typeof currentTrack.duration === 'string' 
+              ? currentTrack.duration 
+              : formatTime(currentTrack.duration || 240000)
+            }
+          </Text>
+        </View>
 
+        {/* Controles */}
+        <View style={styles.controlsContainer}>
           <TouchableOpacity style={styles.controlButton}>
-            <Ionicons name="play-skip-back" size={28} color="#fff" />
+            <Ionicons name="play-skip-back" size={32} color="#fff" />
           </TouchableOpacity>
-
-          <TouchableOpacity 
-            onPress={togglePlayPause} 
+          
+          <TouchableOpacity
             style={styles.playButton}
-            disabled={isLoading}
+            onPress={togglePlayPause}
           >
             <Ionicons
-              name={isLoading ? 'hourglass' : isPlaying ? 'pause' : 'play'}
-              size={32}
-              color="#fff"
+              name={isPlaying ? 'pause' : 'play'}
+              size={48}
+              color="#FF6B9D"
             />
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.controlButton}>
-            <Ionicons name="play-skip-forward" size={28} color="#fff" />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={toggleRepeat} style={styles.controlButton}>
-            <Ionicons 
-              name="repeat" 
-              size={24} 
-              color={isRepeating ? '#20B2AA' : '#ccc'} 
-            />
+          
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={skipToNext}
+          >
+            <Ionicons name="play-skip-forward" size={32} color="#fff" />
           </TouchableOpacity>
         </View>
-
-        {/* Secondary Controls */}
-        <View style={styles.secondaryControls}>
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="heart-outline" size={20} color="#ccc" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="add" size={20} color="#ccc" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="share-outline" size={20} color="#ccc" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="list" size={20} color="#ccc" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Upcoming Songs */}
-        <View style={styles.upcomingSection}>
-          <Text style={styles.upcomingTitle}>Próximas canciones</Text>
-          {upcomingSongs.map((song, index) => (
-            <TouchableOpacity key={index} style={styles.upcomingItem}>
-              <View style={styles.upcomingInfo}>
-                <Text style={styles.upcomingTitle}>{song.title}</Text>
-                <Text style={styles.upcomingArtist}>{song.artist}</Text>
-              </View>
-              <Text style={styles.upcomingDuration}>{song.duration}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a1a1a',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#ccc',
   },
   header: {
     flexDirection: 'row',
@@ -299,35 +205,38 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
   },
   headerCenter: {
     alignItems: 'center',
   },
   headerText: {
-    color: '#ccc',
     fontSize: 14,
+    color: '#ccc',
   },
   headerSubtext: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
   },
   content: {
     flex: 1,
+    alignItems: 'center',
     paddingHorizontal: 20,
   },
   albumContainer: {
-    alignItems: 'center',
-    marginVertical: 30,
+    marginTop: 40,
+    marginBottom: 40,
   },
   albumArt: {
     width: width * 0.7,
     height: width * 0.7,
-    borderRadius: 12,
+    borderRadius: 20,
   },
   songInfo: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
   },
   songTitle: {
     fontSize: 24,
@@ -336,107 +245,56 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 8,
   },
-  artistName: {
+  songArtist: {
     fontSize: 18,
+    color: '#FF6B9D',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  songAlbum: {
+    fontSize: 14,
     color: '#ccc',
     textAlign: 'center',
   },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
     marginBottom: 40,
   },
   timeText: {
+    fontSize: 12,
     color: '#ccc',
-    fontSize: 14,
     minWidth: 40,
   },
   progressBar: {
     flex: 1,
-    height: 4,
+    height: 20,
     backgroundColor: '#333',
-    borderRadius: 2,
+    borderRadius: 10,
     marginHorizontal: 15,
-    position: 'relative',
+    justifyContent: 'center',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#20B2AA',
-    borderRadius: 2,
+    backgroundColor: '#FF6B9D',
+    borderRadius: 10,
   },
-  progressThumb: {
-    position: 'absolute',
-    top: -6,
-    width: 16,
-    height: 16,
-    backgroundColor: '#20B2AA',
-    borderRadius: 8,
-    marginLeft: -8, // Centrar el thumb en la posición
-  },
-  mainControls: {
+  controlsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 30,
   },
   controlButton: {
-    padding: 15,
-  },
-  playButton: {
-    backgroundColor: '#20B2AA',
-    borderRadius: 35,
-    width: 70,
-    height: 70,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 20,
     marginHorizontal: 20,
   },
-  secondaryControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 40,
-  },
-  secondaryButton: {
-    padding: 15,
-  },
-  upcomingSection: {
-    marginBottom: 30,
-  },
-  upcomingTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 15,
-  },
-  upcomingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  upcomingInfo: {
-    flex: 1,
-  },
-  upcomingTitle: {
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 4,
-  },
-  upcomingArtist: {
-    fontSize: 14,
-    color: '#ccc',
-  },
-  upcomingDuration: {
-    fontSize: 14,
-    color: '#888',
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#20B2AA',
-    textAlign: 'center',
-    marginTop: 8,
-    fontStyle: 'italic',
+  playButton: {
+    padding: 20,
+    backgroundColor: 'rgba(255, 107, 157, 0.1)',
+    borderRadius: 50,
+    marginHorizontal: 20,
   },
 });
+
+export default NowPlayingScreen;

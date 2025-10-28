@@ -10,6 +10,9 @@ import {
     View,
 } from 'react-native';
 import { CustomButton } from '../components/CustomButton';
+import { MiniPlayer } from '../components/MiniPlayer';
+import { Colors, Shadows } from '../constants/Colors';
+import { useAudioPlayer } from '../hooks/useAudioPlayer';
 
 const profileOptions = [
   {
@@ -56,12 +59,21 @@ const quickStats = [
   { label: 'Artistas seguidos', value: '45' },
 ];
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }: any) {
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
   const [offlineMode, setOfflineMode] = React.useState(false);
 
+  const { 
+    currentSong, 
+    isPlaying, 
+    isMiniPlayerVisible, 
+    togglePlayPause, 
+    hideMiniPlayer 
+  } = useAudioPlayer();
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
       {/* Header del perfil */}
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
@@ -70,7 +82,7 @@ export default function ProfileScreen() {
             style={styles.avatar}
           />
           <TouchableOpacity style={styles.editAvatarButton}>
-            <Ionicons name="camera" size={16} color="#fff" />
+            <Ionicons name="camera" size={16} color={Colors.text} />
           </TouchableOpacity>
         </View>
         <Text style={styles.userName}>Usuario</Text>
@@ -101,7 +113,7 @@ export default function ProfileScreen() {
         
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>
-            <Ionicons name="notifications" size={24} color="#20B2AA" />
+            <Ionicons name="notifications" size={24} color={Colors.primary} />
             <View style={styles.settingText}>
               <Text style={styles.settingTitle}>Notificaciones</Text>
               <Text style={styles.settingSubtitle}>Recibir notificaciones de música</Text>
@@ -110,14 +122,14 @@ export default function ProfileScreen() {
           <Switch
             value={notificationsEnabled}
             onValueChange={setNotificationsEnabled}
-            trackColor={{ false: '#333', true: '#20B2AA' }}
-            thumbColor={notificationsEnabled ? '#fff' : '#ccc'}
+            trackColor={{ false: Colors.surfaceSecondary, true: Colors.primary }}
+            thumbColor={notificationsEnabled ? Colors.text : Colors.textSecondary}
           />
         </View>
 
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>
-            <Ionicons name="download" size={24} color="#20B2AA" />
+            <Ionicons name="download" size={24} color={Colors.primary} />
             <View style={styles.settingText}>
               <Text style={styles.settingTitle}>Modo offline</Text>
               <Text style={styles.settingSubtitle}>Reproducir solo música descargada</Text>
@@ -126,8 +138,8 @@ export default function ProfileScreen() {
           <Switch
             value={offlineMode}
             onValueChange={setOfflineMode}
-            trackColor={{ false: '#333', true: '#20B2AA' }}
-            thumbColor={offlineMode ? '#fff' : '#ccc'}
+            trackColor={{ false: Colors.surfaceSecondary, true: Colors.primary }}
+            thumbColor={offlineMode ? Colors.text : Colors.textSecondary}
           />
         </View>
       </View>
@@ -138,10 +150,10 @@ export default function ProfileScreen() {
         {profileOptions.map((option, index) => (
           <TouchableOpacity key={index} style={styles.optionItem}>
             <View style={styles.optionInfo}>
-              <Ionicons name={option.icon as any} size={24} color="#20B2AA" />
+              <Ionicons name={option.icon as any} size={24} color={Colors.primary} />
               <Text style={styles.optionTitle}>{option.title}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Ionicons name="chevron-forward" size={20} color={Colors.textTertiary} />
           </TouchableOpacity>
         ))}
       </View>
@@ -161,18 +173,35 @@ export default function ProfileScreen() {
         <Text style={styles.appCopyright}>© 2024 Mi Reproductor de Música</Text>
       </View>
     </ScrollView>
+
+    {/* Mini Player */}
+    {isMiniPlayerVisible && (
+      <MiniPlayer
+        song={currentSong}
+        isPlaying={isPlaying}
+        onPress={() => navigation.navigate('NowPlaying', { song: currentSong })}
+        onPlayPause={togglePlayPause}
+        onNext={() => {}}
+        onPrevious={() => {}}
+        onClose={hideMiniPlayer}
+      />
+    )}
+  </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: Colors.background,
   },
   profileHeader: {
     alignItems: 'center',
     paddingVertical: 30,
     paddingHorizontal: 20,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   avatarContainer: {
     position: 'relative',
@@ -182,35 +211,38 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
+    ...Shadows.medium,
   },
   editAvatarButton: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#20B2AA',
+    backgroundColor: Colors.primary,
     borderRadius: 15,
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Shadows.small,
   },
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.text,
     marginBottom: 5,
   },
   userEmail: {
     fontSize: 16,
-    color: '#ccc',
+    color: Colors.textSecondary,
     marginBottom: 20,
   },
   editButton: {
-    backgroundColor: '#333',
-    borderColor: '#20B2AA',
+    backgroundColor: Colors.surfaceSecondary,
+    borderColor: Colors.primary,
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 20,
+    ...Shadows.small,
   },
   statsContainer: {
     paddingHorizontal: 20,
@@ -219,7 +251,7 @@ const styles = StyleSheet.create({
   statsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.text,
     marginBottom: 15,
   },
   statsGrid: {
@@ -229,21 +261,22 @@ const styles = StyleSheet.create({
   },
   statItem: {
     width: '48%',
-    backgroundColor: '#333',
-    borderRadius: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
     padding: 15,
     marginBottom: 10,
     alignItems: 'center',
+    ...Shadows.small,
   },
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#20B2AA',
+    color: Colors.primary,
     marginBottom: 5,
   },
   statLabel: {
     fontSize: 12,
-    color: '#ccc',
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
   settingsContainer: {
@@ -253,17 +286,18 @@ const styles = StyleSheet.create({
   settingsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.text,
     marginBottom: 15,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#333',
-    borderRadius: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
     padding: 15,
     marginBottom: 10,
+    ...Shadows.small,
   },
   settingInfo: {
     flexDirection: 'row',
@@ -277,12 +311,12 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#fff',
+    color: Colors.text,
     marginBottom: 4,
   },
   settingSubtitle: {
     fontSize: 14,
-    color: '#ccc',
+    color: Colors.textSecondary,
   },
   optionsContainer: {
     paddingHorizontal: 20,
@@ -291,17 +325,18 @@ const styles = StyleSheet.create({
   optionsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: Colors.text,
     marginBottom: 15,
   },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#333',
-    borderRadius: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
     padding: 15,
     marginBottom: 10,
+    ...Shadows.small,
   },
   optionInfo: {
     flexDirection: 'row',
@@ -310,7 +345,7 @@ const styles = StyleSheet.create({
   },
   optionTitle: {
     fontSize: 16,
-    color: '#fff',
+    color: Colors.text,
     marginLeft: 15,
   },
   logoutContainer: {
@@ -318,9 +353,10 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   logoutButton: {
-    backgroundColor: '#FF6B6B',
-    borderColor: '#FF6B6B',
+    backgroundColor: Colors.error,
+    borderColor: Colors.error,
     borderRadius: 25,
+    ...Shadows.medium,
   },
   appInfo: {
     alignItems: 'center',
@@ -328,11 +364,11 @@ const styles = StyleSheet.create({
   },
   appVersion: {
     fontSize: 14,
-    color: '#888',
+    color: Colors.textTertiary,
     marginBottom: 5,
   },
   appCopyright: {
     fontSize: 12,
-    color: '#666',
+    color: Colors.textMuted,
   },
 });
