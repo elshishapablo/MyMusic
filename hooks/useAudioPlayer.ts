@@ -64,34 +64,23 @@ export const useAudioPlayer = (): AudioPlayerState & AudioPlayerControls => {
       console.log('Current sound exists:', !!sound, 'isPlaying:', isPlaying);
       setIsLoading(true);
       
-      // Manejo especial para "Don't Cry" - asegurar que se pause completamente antes de reproducir
-      if (song.id === 'dont-cry') {
-        console.log('Special handling for Don\'t Cry');
-        if (sound) {
-          await sound.stopAsync();
-          await sound.unloadAsync();
-          setSound(null);
-          setIsPlaying(false);
-        }
-      } else {
-        // Si hay un sonido cargado, siempre liberarlo antes de cargar uno nuevo
-        if (sound) {
-          console.log('Unloading current sound before playing new one');
-          try {
-            // Verificar si está cargado antes de intentar pausar
-            const status = await sound.getStatusAsync();
-            if (status.isLoaded) {
-              await sound.pauseAsync();
-              console.log('Paused current song');
-            }
-          } catch (error) {
-            console.log('Error pausing current song:', error);
+      // Si hay un sonido cargado, siempre liberarlo antes de cargar uno nuevo
+      if (sound) {
+        console.log('Unloading current sound before playing new one');
+        try {
+          // Verificar si está cargado antes de intentar pausar
+          const status = await sound.getStatusAsync();
+          if (status.isLoaded) {
+            await sound.pauseAsync();
+            console.log('Paused current song');
           }
-          
-          await sound.unloadAsync();
-          setSound(null);
-          setIsPlaying(false);
+        } catch (error) {
+          console.log('Error pausing current song:', error);
         }
+        
+        await sound.unloadAsync();
+        setSound(null);
+        setIsPlaying(false);
       }
 
       // Cargar el archivo de audio

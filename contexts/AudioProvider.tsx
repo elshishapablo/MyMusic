@@ -1,5 +1,6 @@
 import { Audio } from 'expo-av';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
 // Definir la interfaz del contexto
 interface AudioContextType {
@@ -9,6 +10,7 @@ interface AudioContextType {
   isPlaying: boolean;
   playbackTime: number;
   isNowPlayingScreenVisible: boolean;
+  volume: number;
   
   // Funciones
   playNewSong: (track: any) => Promise<void>;
@@ -16,6 +18,7 @@ interface AudioContextType {
   skipToNext: () => void;
   seekTo: (time: number) => Promise<void>;
   setNowPlayingScreenVisible: (visible: boolean) => void;
+  setVolume: (volume: number) => Promise<void>;
 }
 
 // Crear el contexto
@@ -38,6 +41,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackTime, setPlaybackTime] = useState(0);
   const [isNowPlayingScreenVisible, setIsNowPlayingScreenVisible] = useState(false);
+  const [volume, setVolumeState] = useState(1.0);
   
   // Referencias
   const playbackStatusInterval = useRef<NodeJS.Timeout | null>(null);
@@ -75,6 +79,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // Establecer la nueva canción y reproducir
       setCurrentTrack(track);
       setSoundObject(sound);
+      
+      // Aplicar el volumen actual antes de reproducir
+      await sound.setVolumeAsync(volume);
+      
       await sound.playAsync();
       setIsPlaying(true);
       
@@ -129,6 +137,60 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     console.log('AudioProvider: NowPlaying screen visibility set to:', visible);
   };
 
+  // Función para controlar el volumen
+  const setVolume = async (newVolume: number) => {
+    try {
+      setVolumeState(newVolume);
+      if (soundObject) {
+        await soundObject.setVolumeAsync(newVolume);
+        console.log('AudioProvider: Volume set to:', newVolume);
+      }
+    } catch (error) {
+      console.error('AudioProvider: Error setting volume:', error);
+    }
+  };
+
+  // Configurar controles de auriculares
+  useEffect(() => {
+    const configureAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          staysActiveInBackground: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      } catch (error) {
+        console.error('Error configuring audio mode:', error);
+      }
+    };
+
+    configureAudio();
+  }, []);
+
+  // Detectar eventos de auriculares y controles remotos
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active' && soundObject) {
+        // Reconfigurar el audio cuando la app vuelve a estar activa
+        Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          staysActiveInBackground: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription?.remove();
+    };
+  }, [soundObject]);
+
   // Limpiar recursos al desmontar
   useEffect(() => {
     return () => {
@@ -145,11 +207,13 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     isPlaying,
     playbackTime,
     isNowPlayingScreenVisible,
+    volume,
     playNewSong,
     togglePlayPause,
     skipToNext,
     seekTo,
     setNowPlayingScreenVisible,
+    setVolume,
   };
 
   return (

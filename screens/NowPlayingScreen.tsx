@@ -15,9 +15,10 @@ import { useAudio } from '../contexts/AudioProvider';
 const { width, height } = Dimensions.get('window');
 
 const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const { currentTrack, isPlaying, playbackTime, togglePlayPause, skipToNext, seekTo, setNowPlayingScreenVisible } = useAudio();
+  const { currentTrack, isPlaying, playbackTime, togglePlayPause, skipToNext, seekTo, setNowPlayingScreenVisible, volume, setVolume } = useAudio();
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState(0);
+  const [isVolumeDragging, setIsVolumeDragging] = useState(false);
   const insets = useSafeAreaInsets();
 
   if (!currentTrack) {
@@ -112,6 +113,29 @@ const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     seekTo(seekTime);
   };
 
+  // Funciones para controlar el volumen
+  const handleVolumeStart = (event: any) => {
+    setIsVolumeDragging(true);
+    const { locationX } = event.nativeEvent;
+    const volumeBarWidth = width - 120; // Ancho aproximado de la barra
+    const percentage = (locationX / volumeBarWidth) * 100;
+    const newVolume = Math.min(Math.max(percentage / 100, 0), 1);
+    setVolume(newVolume);
+  };
+
+  const handleVolumeMove = (event: any) => {
+    if (!isVolumeDragging) return;
+    const { locationX } = event.nativeEvent;
+    const volumeBarWidth = width - 120; // Ancho aproximado de la barra
+    const percentage = (locationX / volumeBarWidth) * 100;
+    const newVolume = Math.min(Math.max(percentage / 100, 0), 1);
+    setVolume(newVolume);
+  };
+
+  const handleVolumeEnd = () => {
+    setIsVolumeDragging(false);
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
@@ -195,6 +219,25 @@ const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           >
             <Ionicons name="play-skip-forward" size={32} color="#fff" />
           </TouchableOpacity>
+        </View>
+
+        {/* Barra de Volumen */}
+        <View style={styles.volumeContainer}>
+          <Ionicons name="volume-low" size={20} color="#ccc" />
+          <TouchableOpacity 
+            style={styles.volumeBar}
+            onPressIn={handleVolumeStart}
+            onPressOut={handleVolumeEnd}
+            activeOpacity={1}
+          >
+            <View 
+              style={[
+                styles.volumeFill, 
+                { width: `${volume * 100}%` }
+              ]} 
+            />
+          </TouchableOpacity>
+          <Ionicons name="volume-high" size={20} color="#ccc" />
         </View>
       </View>
     </View>
@@ -310,6 +353,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 107, 157, 0.1)',
     borderRadius: 50,
     marginHorizontal: 20,
+  },
+  volumeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 30,
+    paddingHorizontal: 20,
+  },
+  volumeBar: {
+    flex: 1,
+    height: 20,
+    backgroundColor: '#333',
+    borderRadius: 10,
+    marginHorizontal: 15,
+    justifyContent: 'center',
+  },
+  volumeFill: {
+    height: '100%',
+    backgroundColor: '#FF6B9D',
+    borderRadius: 10,
   },
 });
 
