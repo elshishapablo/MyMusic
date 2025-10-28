@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
 import {
     Dimensions,
     Image,
@@ -66,6 +67,20 @@ const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     setNowPlayingScreenVisible(false);
     navigation.goBack();
   };
+
+  // Detectar cuando se sale de la pantalla (incluyendo gesto de retroceso de Android)
+  useFocusEffect(
+    useCallback(() => {
+      // Cuando la pantalla se enfoca (entra), establecer visibilidad en true
+      setNowPlayingScreenVisible(true);
+      
+      // Función de limpieza que se ejecuta cuando se sale de la pantalla
+      return () => {
+        console.log('NowPlayingScreen: Screen lost focus, hiding mini player');
+        setNowPlayingScreenVisible(false);
+      };
+    }, [setNowPlayingScreenVisible])
+  );
 
   // Manejar el inicio del arrastre
   const handlePanStart = (event: any) => {

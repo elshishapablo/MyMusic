@@ -17,8 +17,13 @@ const MiniPlayer: React.FC = () => {
   const { currentTrack, isPlaying, togglePlayPause, skipToNext, isNowPlayingScreenVisible, setNowPlayingScreenVisible } = useAudio();
   const navigation = useNavigation();
 
-  // Solo renderizar si hay una canción actual y la pantalla NowPlaying no está visible
-  if (!currentTrack || isNowPlayingScreenVisible) {
+  // Solo renderizar si hay una canción actual
+  if (!currentTrack) {
+    return null;
+  }
+
+  // Si la pantalla NowPlaying está visible, ocultar el mini player
+  if (isNowPlayingScreenVisible) {
     return null;
   }
 
