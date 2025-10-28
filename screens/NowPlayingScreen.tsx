@@ -4,12 +4,12 @@ import React, { useCallback, useState } from 'react';
 import {
     Dimensions,
     Image,
-    SafeAreaView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAudio } from '../contexts/AudioProvider';
 
 const { width, height } = Dimensions.get('window');
@@ -18,14 +18,15 @@ const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { currentTrack, isPlaying, playbackTime, togglePlayPause, skipToNext, seekTo, setNowPlayingScreenVisible } = useAudio();
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState(0);
+  const insets = useSafeAreaInsets();
 
   if (!currentTrack) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No hay canción seleccionada</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -112,7 +113,7 @@ const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleClose}>
@@ -196,7 +197,7 @@ const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
