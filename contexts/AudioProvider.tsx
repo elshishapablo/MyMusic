@@ -15,6 +15,7 @@ interface AudioContextType {
   playNewSong: (track: any) => Promise<void>;
   togglePlayPause: () => Promise<void>;
   skipToNext: () => void;
+  skipToPrevious: () => void;
   seekTo: (time: number) => Promise<void>;
   setNowPlayingScreenVisible: (visible: boolean) => void;
 }
@@ -112,6 +113,12 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // TODO: Implementar lógica de siguiente canción
   };
 
+  // Función placeholder para saltar a la canción anterior
+  const skipToPrevious = () => {
+    console.log('AudioProvider: skipToPrevious called (placeholder)');
+    // TODO: Implementar lógica de canción anterior
+  };
+
   // Función para adelantar/retroceder en la canción
   const seekTo = async (time: number) => {
     if (!soundObject) return;
@@ -192,6 +199,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     playNewSong,
     togglePlayPause,
     skipToNext,
+    skipToPrevious,
     seekTo,
     setNowPlayingScreenVisible,
   };

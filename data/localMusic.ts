@@ -21,7 +21,7 @@ export const localSongs: LocalSong[] = [
     album: 'Un Verano Sin Ti',
     duration: '3:30',
     audioFile: require('../assets/audio/Bad Bunny - Aguacero (LetraLyrics).mp3'),
-    coverImage: require('../assets/images/artists/Bad-Bunny-1.png'),
+    coverImage: require('../assets/images/portadas/aguacero.jpg'),
     genre: 'Reggaeton',
     year: 2022
   },

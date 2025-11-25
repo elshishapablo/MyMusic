@@ -1,11 +1,10 @@
-// Mapeo opcional de imágenes locales de artistas.
-// Coloca tus fotos en assets/images/artists/ y añade la entrada aquí.
-// Ejemplo:
-// export const artistImages: Record<string, any> = {
-//   'Sam Smith': require('../assets/images/artists/sam_smith.jpg'),
-//   'Guns N\' Roses': require('../assets/images/artists/guns_n_roses.jpg'),
-// };
-
-export const artistImages: Record<string, any> = {};
+// Mapeo de imágenes locales de artistas.
+export const artistImages: Record<string, any> = {
+  'Bad Bunny': require('../assets/images/artists/Bad-Bunny-1.png'),
+  'Dua Lipa': require('../assets/images/artists/dua.jpg'),
+  'Guns N\' Roses': require('../assets/images/artists/guns.jpg'),
+  'Imagine Dragons': require('../assets/images/artists/imagine.jpg'),
+  'Sam Smith': require('../assets/images/artists/sam.png'),
+};
 
 

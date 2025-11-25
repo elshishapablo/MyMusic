@@ -4,14 +4,17 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import MiniPlayer from './components/MiniPlayer';
 import { Colors } from './constants/Colors';
-import { AudioProvider } from './contexts';
+import { AudioProvider, UserProvider, useUser } from './contexts';
 
 // Importar pantallas
-import { LibraryScreen, NowPlayingScreen, ProfileScreen, SearchScreen } from './screens';
+import { NowPlayingScreen, ProfileScreen, SearchScreen } from './screens';
 import TrackListScreen from './screens/TrackListScreen';
+import FavoritesScreen from './screens/FavoritesScreen';
+import LoginScreen from './screens/LoginScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -25,8 +28,8 @@ function TabNavigator() {
 
           if (route.name === 'Inicio') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Biblioteca') {
-            iconName = focused ? 'library' : 'library-outline';
+          } else if (route.name === 'Favoritas') {
+            iconName = focused ? 'heart' : 'heart-outline';
           } else if (route.name === 'Buscar') {
             iconName = focused ? 'search' : 'search-outline';
           } else if (route.name === 'Perfil') {
@@ -75,14 +78,6 @@ function TabNavigator() {
           borderTopWidth: 0,
           borderWidth: 1.5,
           borderColor: 'rgba(255, 107, 157, 0.2)',
-          elevation: 35,
-          shadowColor: Colors.primary,
-          shadowOffset: {
-            width: 0,
-            height: 12,
-          },
-          shadowOpacity: 0.4,
-          shadowRadius: 25,
         },
         tabBarItemStyle: {
           paddingVertical: 0,
@@ -114,10 +109,10 @@ function TabNavigator() {
         }}
       />
       <Tab.Screen 
-        name="Biblioteca" 
-        component={LibraryScreen}
+        name="Favoritas" 
+        component={FavoritesScreen}
         options={{
-          tabBarLabel: 'Biblioteca',
+          tabBarLabel: 'Favoritas',
         }}
       />
       <Tab.Screen 
@@ -138,32 +133,56 @@ function TabNavigator() {
   );
 }
 
-export default function App() {
+function MainNavigator() {
+  const { isLoggedIn, isLoading } = useUser();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <LoginScreen />;
+  }
+
   return (
-    <AudioProvider>
-      <NavigationContainer>
-        <StatusBar style="light" />
-        <Stack.Navigator 
-          screenOptions={{ 
+    <NavigationContainer>
+      <StatusBar style="light" />
+      <Stack.Navigator 
+        screenOptions={{ 
+          headerShown: false,
+          animation: 'slide_from_bottom',
+        }}
+      >
+        <Stack.Screen name="Main" component={TabNavigator} />
+        <Stack.Screen 
+          name="NowPlaying" 
+          component={NowPlayingScreen}
+          options={{
             headerShown: false,
+            presentation: 'modal',
             animation: 'slide_from_bottom',
           }}
-        >
-          <Stack.Screen name="Main" component={TabNavigator} />
-          <Stack.Screen 
-            name="NowPlaying" 
-            component={NowPlayingScreen}
-            options={{
-              headerShown: false,
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
-            }}
-          />
-        </Stack.Navigator>
-        
-        {/* Mini Player Global */}
-        <MiniPlayer />
-      </NavigationContainer>
-    </AudioProvider>
+        />
+      </Stack.Navigator>
+      
+      {/* Mini Player Global */}
+      <MiniPlayer />
+    </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <UserProvider>
+        <AudioProvider>
+          <MainNavigator />
+        </AudioProvider>
+      </UserProvider>
+    </SafeAreaProvider>
   );
 }

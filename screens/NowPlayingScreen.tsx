@@ -9,6 +9,7 @@ import {
     Text,
     TouchableOpacity,
     View,
+    PanResponder,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAudio } from '../contexts/AudioProvider';
@@ -17,7 +18,7 @@ import { Colors, Shadows } from '../constants/Colors';
 const { width, height } = Dimensions.get('window');
 
 const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const { currentTrack, isPlaying, playbackTime, togglePlayPause, skipToNext, seekTo, setNowPlayingScreenVisible } = useAudio();
+  const { currentTrack, isPlaying, playbackTime, togglePlayPause, skipToNext, skipToPrevious, seekTo, setNowPlayingScreenVisible } = useAudio();
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState(0);
   const insets = useSafeAreaInsets();
@@ -38,9 +39,19 @@ const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const handleSeek = (position: number) => {
-    const seekTime = (position / 100) * (currentTrack.duration || 240000); // 4 min default
-    seekTo(seekTime);
+  const formatRemainingTime = (current: number, total: number): string => {
+    const remaining = total - current;
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    return `-${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Función para parsear duración en formato "4:00" a milisegundos
+  const parseDuration = (duration: string): number => {
+    const parts = duration.split(':');
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    return (minutes * 60 + seconds) * 1000;
   };
 
   // Calcular el porcentaje de progreso
@@ -58,200 +69,198 @@ const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     return Math.min((playbackTime / duration) * 100, 100);
   };
 
-  // Función para parsear duración en formato "4:00" a milisegundos
-  const parseDuration = (duration: string): number => {
-    const parts = duration.split(':');
-    const minutes = parseInt(parts[0], 10);
-    const seconds = parseInt(parts[1], 10);
-    return (minutes * 60 + seconds) * 1000;
-  };
-
   const handleClose = () => {
     setNowPlayingScreenVisible(false);
     navigation.goBack();
   };
 
-  // Detectar cuando se sale de la pantalla (incluyendo gesto de retroceso de Android)
+  // Detectar cuando se sale de la pantalla
   useFocusEffect(
     useCallback(() => {
-      // Cuando la pantalla se enfoca (entra), establecer visibilidad en true
       setNowPlayingScreenVisible(true);
-      
-      // Función de limpieza que se ejecuta cuando se sale de la pantalla
       return () => {
-        console.log('NowPlayingScreen: Screen lost focus, hiding mini player');
         setNowPlayingScreenVisible(false);
       };
     }, [setNowPlayingScreenVisible])
   );
 
-  // Manejar el inicio del arrastre
-  const handlePanStart = (event: any) => {
-    setIsDragging(true);
-    const { locationX } = event.nativeEvent;
-    const progressBarWidth = width - 120; // Ancho aproximado de la barra
-    const percentage = (locationX / progressBarWidth) * 100;
-    setDragPosition(Math.min(Math.max(percentage, 0), 100));
-  };
+  // PanResponder para manejar el arrastre de la barra de progreso
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (event) => {
+      setIsDragging(true);
+      const progressBarWidth = width - 80; // Ancho de la barra (ancho total menos márgenes de tiempo)
+      const touchX = event.nativeEvent.locationX;
+      const percentage = (touchX / progressBarWidth) * 100;
+      setDragPosition(Math.min(Math.max(percentage, 0), 100));
+    },
+    onPanResponderMove: (event) => {
+      if (!isDragging) return;
+      const progressBarWidth = width - 80;
+      const touchX = event.nativeEvent.locationX;
+      const percentage = (touchX / progressBarWidth) * 100;
+      setDragPosition(Math.min(Math.max(percentage, 0), 100));
+    },
+    onPanResponderRelease: () => {
+      if (!isDragging) return;
+      setIsDragging(false);
+      const duration = typeof currentTrack.duration === 'string' 
+        ? parseDuration(currentTrack.duration) 
+        : currentTrack.duration;
+      const seekTime = (dragPosition / 100) * duration;
+      seekTo(seekTime);
+    },
+  });
 
-  // Manejar el movimiento durante el arrastre
-  const handlePanMove = (event: any) => {
-    if (!isDragging) return;
-    const { locationX } = event.nativeEvent;
-    const progressBarWidth = width - 120; // Ancho aproximado de la barra
-    const percentage = (locationX / progressBarWidth) * 100;
-    setDragPosition(Math.min(Math.max(percentage, 0), 100));
-  };
+  const duration = typeof currentTrack.duration === 'string' 
+    ? parseDuration(currentTrack.duration) 
+    : currentTrack.duration || 240000;
 
-  // Manejar el final del arrastre
-  const handlePanEnd = () => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    const duration = typeof currentTrack.duration === 'string' 
-      ? parseDuration(currentTrack.duration) 
-      : currentTrack.duration;
-    const seekTime = (dragPosition / 100) * duration;
-    seekTo(seekTime);
-  };
-
+  const currentTime = isDragging 
+    ? (dragPosition / 100) * duration
+    : playbackTime;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Imagen de fondo a pantalla completa */}
+      {/* Fondo: portada con opacidad */}
       <ImageBackground 
         source={currentTrack.coverImage} 
         style={styles.backgroundImage}
         resizeMode="cover"
-        blurRadius={0}
       >
-        {/* Gradiente de desvanecimiento hacia abajo */}
-        <View style={styles.gradientOverlay}>
-          <View style={styles.gradientLayer1} />
-          <View style={styles.gradientLayer2} />
-          <View style={styles.gradientLayer3} />
-        </View>
-        
-        {/* Contenido sobre la imagen */}
-        <View style={styles.contentOverlay}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity 
-              onPress={handleClose}
-              style={styles.headerButton}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="chevron-down" size={28} color={Colors.text} />
-            </TouchableOpacity>
-            <View style={styles.headerCenter}>
-              <Text style={styles.headerText}>Reproduciendo desde</Text>
-              <Text style={styles.headerSubtext}>Mi Biblioteca</Text>
-            </View>
-            <TouchableOpacity 
-              style={styles.headerButton}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="ellipsis-horizontal" size={24} color={Colors.text} />
-            </TouchableOpacity>
+        {/* Overlay oscuro para dar efecto de opacidad */}
+        <View style={styles.overlay} />
+      </ImageBackground>
+      
+      {/* Contenido principal */}
+      <View style={styles.content}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={handleClose}
+            style={styles.headerButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>Today's top hits</Text>
           </View>
+          <TouchableOpacity 
+            style={styles.headerButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="ellipsis-horizontal" size={24} color={Colors.text} />
+          </TouchableOpacity>
+        </View>
 
-          {/* Información de la canción */}
-          <View style={styles.songInfo}>
-            <Text style={styles.songTitle} numberOfLines={2}>
-              {currentTrack.title}
-            </Text>
+        {/* Portada grande centrada */}
+        <View style={styles.albumArtWrapper}>
+          <Image 
+            source={currentTrack.coverImage} 
+            style={styles.albumArt}
+            resizeMode="cover"
+          />
+        </View>
+
+        {/* Información de la canción centrada */}
+        <View style={styles.songInfo}>
+          <Text style={styles.songTitle} numberOfLines={1}>
+            {currentTrack.title}
+          </Text>
+          <View style={styles.artistRow}>
             <Text style={styles.songArtist} numberOfLines={1}>
               {currentTrack.artist}
             </Text>
-            {currentTrack.album && (
-              <Text style={styles.songAlbum} numberOfLines={1}>
-                {currentTrack.album}
-              </Text>
-            )}
-          </View>
-
-          {/* Barra de progreso */}
-          <View style={styles.progressContainer}>
-            <Text style={styles.timeText}>
-              {isDragging 
-                ? formatTime((dragPosition / 100) * (typeof currentTrack.duration === 'string' 
-                    ? parseDuration(currentTrack.duration) 
-                    : currentTrack.duration || 240000))
-                : formatTime(playbackTime)
-              }
-            </Text>
-            <TouchableOpacity 
-              style={styles.progressBar}
-              onPressIn={handlePanStart}
-              onPressOut={handlePanEnd}
-              activeOpacity={1}
-            >
-              <View style={styles.progressBarBackground}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { width: `${getProgressPercentage()}%` }
-                  ]} 
-                />
-                <View 
-                  style={[
-                    styles.progressThumb,
-                    { left: `${getProgressPercentage()}%` }
-                  ]} 
-                />
-              </View>
-            </TouchableOpacity>
-            <Text style={styles.timeText}>
-              {typeof currentTrack.duration === 'string' 
-                ? currentTrack.duration 
-                : formatTime(currentTrack.duration || 240000)
-              }
-            </Text>
-          </View>
-
-          {/* Controles */}
-          <View style={styles.controlsContainer}>
-            <TouchableOpacity 
-              style={styles.controlButton}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="play-skip-back" size={32} color={Colors.text} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.playButton, isPlaying && styles.playButtonActive]}
-              onPress={togglePlayPause}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name={isPlaying ? 'pause' : 'play'}
-                size={36}
-                color={Colors.text}
-              />
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={skipToNext}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="play-skip-forward" size={32} color={Colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Controles secundarios */}
-          <View style={styles.secondaryControls}>
-            <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7}>
-              <Ionicons name="heart-outline" size={24} color={Colors.text} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7}>
-              <Ionicons name="add-circle-outline" size={24} color={Colors.text} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7}>
-              <Ionicons name="list-outline" size={24} color={Colors.text} />
-            </TouchableOpacity>
+            <View style={styles.artistIcon} />
           </View>
         </View>
-      </ImageBackground>
+
+        {/* Barra de progreso */}
+        <View style={styles.progressContainer}>
+          <Text style={styles.timeText}>
+            {formatTime(currentTime)}
+          </Text>
+          <View 
+            style={styles.progressBarWrapper}
+            {...panResponder.panHandlers}
+          >
+            <View style={styles.progressBarBackground}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${getProgressPercentage()}%` }
+                ]} 
+              />
+              <View 
+                style={[
+                  styles.progressThumb,
+                  { left: `${getProgressPercentage()}%` }
+                ]} 
+              />
+            </View>
+          </View>
+          <Text style={styles.timeText}>
+            {formatRemainingTime(currentTime, duration)}
+          </Text>
+        </View>
+
+        {/* Iconos de compartir y corazón */}
+        <View style={styles.actionIcons}>
+          <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+            <Ionicons name="share-outline" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+            <Ionicons name="heart-outline" size={24} color={Colors.text} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Controles de reproducción */}
+        <View style={[styles.controlsContainer, { paddingBottom: insets.bottom + 40, marginTop: 10 }]}>
+          <TouchableOpacity 
+            style={styles.controlButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="shuffle-outline" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.controlButton}
+            activeOpacity={0.7}
+            onPress={skipToPrevious}
+          >
+            <Ionicons name="play-skip-back" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.playButton}
+            onPress={togglePlayPause}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={isPlaying ? 'pause' : 'play'}
+              size={32}
+              color={Colors.background}
+            />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={skipToNext}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="play-skip-forward" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.controlButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="repeat-outline" size={24} color={Colors.text} />
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 };
@@ -260,6 +269,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: width,
+    height: height,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Overlay oscuro para opacidad del fondo
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 10,
   },
   emptyState: {
     flex: 1,
@@ -270,144 +301,99 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: Colors.textSecondary,
   },
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    justifyContent: 'flex-end',
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '70%',
-  },
-  gradientLayer1: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '100%',
-    backgroundColor: Colors.background,
-    opacity: 0.95,
-  },
-  gradientLayer2: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '70%',
-    backgroundColor: Colors.background,
-    opacity: 0.7,
-  },
-  gradientLayer3: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '40%',
-    backgroundColor: Colors.background,
-    opacity: 0.4,
-  },
-  contentOverlay: {
-    flex: 1,
-    paddingBottom: 40,
-    paddingHorizontal: 24,
-    justifyContent: 'flex-end',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 0,
     paddingVertical: 12,
     marginBottom: 20,
   },
   headerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    backdropFilter: 'blur(10px)',
+    backgroundColor: 'transparent',
   },
   headerCenter: {
-    alignItems: 'center',
     flex: 1,
+    alignItems: 'center',
   },
-  headerText: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    fontWeight: '500',
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text,
+    textAlign: 'center',
   },
-  headerSubtext: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginTop: 2,
+  albumArtWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 30,
+    marginTop: 10,
+  },
+  albumArt: {
+    width: width - 60,
+    height: width - 60,
+    borderRadius: 24,
+    ...Shadows.large,
   },
   songInfo: {
-    alignItems: 'flex-start',
-    marginBottom: 32,
-    width: '100%',
+    alignItems: 'center',
+    marginBottom: 30,
   },
   songTitle: {
-    fontSize: 34,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '600',
     color: Colors.text,
-    textAlign: 'left',
+    textAlign: 'center',
     marginBottom: 8,
-    letterSpacing: -0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+  },
+  artistRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   songArtist: {
-    fontSize: 20,
-    color: Colors.text,
-    textAlign: 'left',
-    marginBottom: 4,
-    fontWeight: '500',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    fontSize: 16,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
-  songAlbum: {
-    fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.7)',
-    textAlign: 'left',
+  artistIcon: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.primary,
+    marginLeft: 6,
   },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 32,
+    marginBottom: 20,
+    paddingHorizontal: 0,
   },
   timeText: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
-    minWidth: 50,
+    color: Colors.textSecondary,
+    minWidth: 40,
     fontVariant: ['tabular-nums'],
     fontWeight: '500',
   },
-  progressBar: {
+  progressBarWrapper: {
     flex: 1,
-    height: 50,
+    height: 40,
     marginHorizontal: 12,
     justifyContent: 'center',
   },
   progressBarBackground: {
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 2,
     position: 'relative',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.text,
+    backgroundColor: Colors.primary,
     borderRadius: 2,
     position: 'absolute',
     left: 0,
@@ -415,65 +401,41 @@ const styles = StyleSheet.create({
   },
   progressThumb: {
     position: 'absolute',
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: Colors.text,
-    top: -5.5,
-    marginLeft: -7,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Colors.primary,
+    top: -4,
+    marginLeft: -6,
+  },
+  actionIcons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 0,
+    marginBottom: 10,
+  },
+  actionButton: {
+    padding: 8,
   },
   controlsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    gap: 32,
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
   },
   controlButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playButton: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    backdropFilter: 'blur(10px)',
-  },
-  playButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.text,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  playButtonActive: {
-    backgroundColor: Colors.text,
-  },
-  secondaryControls: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 40,
-    paddingTop: 8,
-  },
-  secondaryButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)',
   },
 });
 

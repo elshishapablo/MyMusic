@@ -13,6 +13,7 @@ import { CustomButton } from '../components/CustomButton';
 import { LocalSongList } from '../components/LocalSongList';
 import { MiniPlayer } from '../components/MiniPlayer';
 import { Colors, Shadows } from '../constants/Colors';
+import { useUser } from '../contexts/UserProvider';
 import { localSongs } from '../data/localMusic';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 
@@ -64,6 +65,7 @@ const quickStats = [
 export default function ProfileScreen({ navigation }: any) {
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
   const [offlineMode, setOfflineMode] = React.useState(false);
+  const { user, logout } = useUser();
 
   const { 
     currentSong, 
@@ -72,6 +74,14 @@ export default function ProfileScreen({ navigation }: any) {
     togglePlayPause, 
     hideMiniPlayer 
   } = useAudioPlayer();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -87,8 +97,8 @@ export default function ProfileScreen({ navigation }: any) {
             <Ionicons name="camera" size={16} color={Colors.text} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.userName}>Usuario</Text>
-        <Text style={styles.userEmail}>usuario@ejemplo.com</Text>
+        <Text style={styles.userName}>{user?.username || 'Usuario'}</Text>
+        <Text style={styles.userEmail}>{user?.username ? `${user.username.toLowerCase()}@music.app` : 'usuario@ejemplo.com'}</Text>
         <CustomButton
           title="Editar perfil"
           onPress={() => console.log('Editar perfil')}
@@ -180,7 +190,7 @@ export default function ProfileScreen({ navigation }: any) {
       <View style={styles.logoutContainer}>
         <CustomButton
           title="Cerrar sesión"
-          onPress={() => console.log('Cerrar sesión')}
+          onPress={handleLogout}
           style={styles.logoutButton}
         />
       </View>
