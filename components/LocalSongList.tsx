@@ -17,6 +17,8 @@ interface LocalSongListProps {
   currentPlayingSongId?: string;
   showAlbumArt?: boolean;
   showDuration?: boolean;
+  scrollEnabled?: boolean;
+  bottomSpacing?: number;
 }
 
 export const LocalSongList: React.FC<LocalSongListProps> = ({
@@ -25,6 +27,8 @@ export const LocalSongList: React.FC<LocalSongListProps> = ({
   currentPlayingSongId,
   showAlbumArt = true,
   showDuration = true,
+  scrollEnabled = false,
+  bottomSpacing = 0,
 }) => {
   const renderSongItem = ({ item }: { item: LocalSong }) => {
     const isPlaying = currentPlayingSongId === item.id;
@@ -79,7 +83,9 @@ export const LocalSongList: React.FC<LocalSongListProps> = ({
       renderItem={renderSongItem}
       keyExtractor={(item) => item.id}
       showsVerticalScrollIndicator={false}
+      scrollEnabled={scrollEnabled}
       contentContainerStyle={styles.listContainer}
+      ListFooterComponent={() => <View style={{ height: bottomSpacing }} />}
     />
   );
 };

@@ -1,19 +1,19 @@
-// Sistema de colores fucsia/rosado moderno
+// Sistema de colores rosa moderno
 export const Colors = {
-  // Colores principales
-  primary: '#FF1493', // Deep Pink
-  primaryDark: '#C71585', // Medium Violet Red
-  primaryLight: '#FF69B4', // Hot Pink
+  // Colores principales (Rosa medio)
+  primary: '#FF6B9D', // Rosa medio equilibrado
+  primaryDark: '#E55A8A', // Rosa medio oscuro
+  primaryLight: '#FF8FB3', // Rosa medio claro
   
   // Colores secundarios
-  secondary: '#FFB6C1', // Light Pink
-  secondaryDark: '#FF91A4', // Pink
-  secondaryLight: '#FFC0CB', // Pink
+  secondary: '#FF8FB3', // Rosa medio claro
+  secondaryDark: '#FF6B9D', // Rosa medio
+  secondaryLight: '#FFB3CC', // Rosa claro
   
   // Colores de acento
-  accent: '#FF10F0', // Magenta
-  accentDark: '#DA70D6', // Orchid
-  accentLight: '#FFB6C1', // Light Pink
+  accent: '#FF6B9D', // Rosa medio
+  accentDark: '#E55A8A', // Rosa medio oscuro
+  accentLight: '#FF8FB3', // Rosa medio claro
   
   // Colores de fondo
   background: '#0A0A0A', // Negro profundo
@@ -38,12 +38,12 @@ export const Colors = {
   info: '#00BFFF', // Deep Sky Blue
   
   // Colores de gradiente
-  gradientStart: '#FF1493', // Deep Pink
-  gradientEnd: '#FF10F0', // Magenta
-  gradientSecondary: '#FF69B4', // Hot Pink
+  gradientStart: '#FF6B9D', // Rosa medio
+  gradientEnd: '#FF8FB3', // Rosa medio claro
+  gradientSecondary: '#FFB3CC', // Rosa claro
   
   // Colores de botones
-  buttonPrimary: '#FF1493', // Deep Pink
+  buttonPrimary: '#FF6B9D', // Rosa medio
   buttonSecondary: '#2D2D2D', // Gris oscuro
   buttonDisabled: '#404040', // Gris deshabilitado
   
@@ -53,21 +53,21 @@ export const Colors = {
   borderDark: '#202020', // Gris oscuro
   
   // Colores de sombra
-  shadow: 'rgba(255, 20, 147, 0.3)', // Rosa con transparencia
+  shadow: 'rgba(255, 107, 157, 0.3)', // Rosa medio con transparencia
   shadowDark: 'rgba(0, 0, 0, 0.5)', // Negro con transparencia
   
   // Colores de overlay
   overlay: 'rgba(0, 0, 0, 0.7)', // Negro con transparencia
-  overlayLight: 'rgba(255, 20, 147, 0.1)', // Rosa con transparencia
+  overlayLight: 'rgba(255, 107, 157, 0.15)', // Rosa medio con transparencia
 };
 
 // Gradientes predefinidos
 export const Gradients = {
-  primary: ['#FF1493', '#FF10F0'],
-  secondary: ['#FF69B4', '#FFB6C1'],
+  primary: ['#FF6B9D', '#FF8FB3'],
+  secondary: ['#FFB3CC', '#FFCCDD'],
   background: ['#0A0A0A', '#1A1A1A'],
   card: ['#1E1E1E', '#2D2D2D'],
-  button: ['#FF1493', '#C71585'],
+  button: ['#FF6B9D', '#E55A8A'],
 };
 
 // Sombras predefinidas

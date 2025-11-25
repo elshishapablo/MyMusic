@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useAudio } from '../contexts/AudioProvider';
 import { localSongs } from '../data/localMusic';
+import { Colors, Shadows } from '../constants/Colors';
 
 const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const { currentTrack, isPlaying, playNewSong } = useAudio();
@@ -55,9 +56,13 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
         </View>
         <View style={styles.trackControls}>
           {isCurrentTrack && isPlaying ? (
-            <Ionicons name="pause-circle" size={32} color="#FF6B9D" />
+            <View style={styles.playingButton}>
+              <Ionicons name="pause-circle" size={36} color={Colors.primary} />
+            </View>
           ) : (
-            <Ionicons name="play-circle" size={32} color="#FF6B9D" />
+            <View style={styles.playButton}>
+              <Ionicons name="play-circle" size={36} color={Colors.primary} />
+            </View>
           )}
         </View>
       </TouchableOpacity>
@@ -67,9 +72,9 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mi Biblioteca</Text>
+        <Text style={styles.headerTitle}>Inicio</Text>
         <Text style={styles.headerSubtitle}>
-          {currentTrack ? `Reproduciendo: ${currentTrack.title}` : 'Selecciona una canción'}
+          {currentTrack ? `Reproduciendo: ${currentTrack.title}` : `${localSongs.length} canciones disponibles`}
         </Text>
       </View>
       
@@ -88,70 +93,89 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: Colors.background,
   },
   header: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.surface,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
+    color: Colors.text,
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: '#FF6B9D',
+    fontSize: 15,
+    color: Colors.primary,
+    fontWeight: '500',
   },
   trackList: {
     flex: 1,
   },
   trackListContent: {
-    paddingBottom: 120, // Espacio para el mini player flotante
+    paddingTop: 8,
+    paddingBottom: 200,
   },
   trackItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: Colors.border,
   },
   currentTrackItem: {
-    backgroundColor: '#2a1a2a',
+    backgroundColor: Colors.overlayLight,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF6B9D',
+    borderLeftColor: Colors.primary,
+    paddingLeft: 16,
+    marginHorizontal: 0,
+    borderRadius: 0,
   },
   trackImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 15,
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    marginRight: 16,
+    ...Shadows.small,
   },
   trackInfo: {
     flex: 1,
   },
   trackTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
+    color: Colors.text,
+    marginBottom: 5,
+    letterSpacing: 0.2,
   },
   currentTrackTitle: {
-    color: '#FF6B9D',
+    color: Colors.primary,
+    fontWeight: 'bold',
   },
   trackArtist: {
     fontSize: 14,
-    color: '#ccc',
-    marginBottom: 2,
+    color: Colors.textSecondary,
+    marginBottom: 3,
   },
   trackAlbum: {
     fontSize: 12,
-    color: '#888',
+    color: Colors.textTertiary,
   },
   trackControls: {
-    padding: 10,
+    padding: 8,
+  },
+  playButton: {
+    opacity: 0.8,
+  },
+  playingButton: {
+    opacity: 1,
   },
 });
 

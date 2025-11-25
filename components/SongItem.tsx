@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { Colors, Shadows } from '../constants/Colors';
 
 interface SongItemProps {
   title: string;
@@ -61,19 +62,21 @@ export const SongItem: React.FC<SongItemProps> = ({
         <TouchableOpacity
           style={styles.actionButton}
           onPress={onLike}
+          activeOpacity={0.7}
         >
           <Ionicons
             name={isLiked ? 'heart' : 'heart-outline'}
             size={20}
-            color={isLiked ? '#FF6B6B' : '#ccc'}
+            color={isLiked ? Colors.primary : Colors.textTertiary}
           />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionButton}
           onPress={onMore}
+          activeOpacity={0.7}
         >
-          <Ionicons name="ellipsis-horizontal" size={20} color="#ccc" />
+          <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -84,21 +87,24 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: Colors.border,
   },
   playingContainer: {
-    backgroundColor: 'rgba(32, 178, 170, 0.1)',
-    borderLeftWidth: 3,
-    borderLeftColor: '#20B2AA',
+    backgroundColor: Colors.overlayLight,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.primary,
+    paddingLeft: 16,
+    borderRadius: 0,
   },
   image: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: 15,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    marginRight: 16,
+    ...Shadows.small,
   },
   infoContainer: {
     flex: 1,
@@ -106,30 +112,34 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#fff',
-    marginBottom: 4,
+    color: Colors.text,
+    marginBottom: 5,
+    letterSpacing: 0.2,
   },
   playingTitle: {
-    color: '#20B2AA',
+    color: Colors.primary,
     fontWeight: 'bold',
   },
   artist: {
     fontSize: 14,
-    color: '#ccc',
+    color: Colors.textSecondary,
   },
   actionsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   duration: {
-    fontSize: 14,
-    color: '#888',
-    marginRight: 15,
-    minWidth: 40,
+    fontSize: 13,
+    color: Colors.textTertiary,
+    marginRight: 12,
+    minWidth: 42,
     textAlign: 'right',
+    fontVariant: ['tabular-nums'],
   },
   actionButton: {
     padding: 8,
-    marginLeft: 5,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceSecondary,
   },
 });

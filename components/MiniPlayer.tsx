@@ -10,6 +10,7 @@ import {
     View,
 } from 'react-native';
 import { useAudio } from '../contexts/AudioProvider';
+import { Colors, Shadows } from '../constants/Colors';
 
 const { width } = Dimensions.get('window');
 
@@ -43,12 +44,20 @@ const MiniPlayer: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.content}>
         {/* Carátula */}
-        <TouchableOpacity onPress={handleCoverPress}>
+        <TouchableOpacity 
+          onPress={handleCoverPress}
+          activeOpacity={0.8}
+          style={styles.coverContainer}
+        >
           <Image source={currentTrack.coverImage} style={styles.coverImage} />
         </TouchableOpacity>
         
         {/* Información de la canción */}
-        <TouchableOpacity style={styles.trackInfo} onPress={handleCoverPress}>
+        <TouchableOpacity 
+          style={styles.trackInfo} 
+          onPress={handleCoverPress}
+          activeOpacity={0.8}
+        >
           <Text style={styles.trackTitle} numberOfLines={1}>
             {currentTrack.title}
           </Text>
@@ -60,24 +69,26 @@ const MiniPlayer: React.FC = () => {
         {/* Controles */}
         <View style={styles.controls}>
           <TouchableOpacity
-            style={styles.controlButton}
+            style={[styles.controlButton, isPlaying && styles.controlButtonActive]}
             onPress={togglePlayPause}
+            activeOpacity={0.7}
           >
             <Ionicons
               name={isPlaying ? 'pause' : 'play'}
-              size={24}
-              color="#FF6B9D"
+              size={22}
+              color={isPlaying ? Colors.text : Colors.primary}
             />
           </TouchableOpacity>
           
           <TouchableOpacity
             style={styles.controlButton}
             onPress={skipToNext}
+            activeOpacity={0.7}
           >
             <Ionicons
               name="play-skip-forward"
-              size={24}
-              color="#FF6B9D"
+              size={22}
+              color={Colors.primary}
             />
           </TouchableOpacity>
         </View>
@@ -89,58 +100,65 @@ const MiniPlayer: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 80, // Posicionar por encima de la barra de tabs (60px + margen)
-    left: 15,
-    right: 15,
-    backgroundColor: '#2a1a2a',
-    borderRadius: 15,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 107, 157, 0.2)', // Borde más sutil y difuminado
-    shadowColor: '#FF6B9D',
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8, // Para Android
+    bottom: 100,
+    left: 16,
+    right: 16,
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadows.large,
     zIndex: 1000,
+    overflow: 'hidden',
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  coverContainer: {
+    position: 'relative',
+    marginRight: 14,
   },
   coverImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: 12,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    ...Shadows.small,
   },
   trackInfo: {
     flex: 1,
     marginRight: 12,
   },
   trackTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#fff',
-    marginBottom: 2,
+    color: Colors.text,
+    marginBottom: 4,
+    letterSpacing: 0.2,
   },
   trackArtist: {
-    fontSize: 14,
-    color: '#ccc',
+    fontSize: 13,
+    color: Colors.textSecondary,
+    letterSpacing: 0.1,
   },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   controlButton: {
-    padding: 8,
-    marginLeft: 8,
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 107, 157, 0.1)',
+    backgroundColor: Colors.surfaceSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.small,
+  },
+  controlButtonActive: {
+    backgroundColor: Colors.primary,
   },
 });
 

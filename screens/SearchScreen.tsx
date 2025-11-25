@@ -2,16 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
     Dimensions,
-    Image,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
+import { LocalSongList } from '../components/LocalSongList';
 import { MiniPlayer } from '../components/MiniPlayer';
 import { Colors, Shadows } from '../constants/Colors';
+import { LocalSong, searchLocalSongs } from '../data/localMusic';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 
 const { width } = Dimensions.get('window');
@@ -51,40 +52,12 @@ const featuredPlaylists = [
   },
 ];
 
-const searchResults = [
-  {
-    type: 'song',
-    title: 'Blinding Lights',
-    artist: 'The Weeknd',
-    album: 'After Hours',
-    duration: '3:20',
-  },
-  {
-    type: 'song',
-    title: 'Levitating',
-    artist: 'Dua Lipa',
-    album: 'Future Nostalgia',
-    duration: '3:23',
-  },
-  {
-    type: 'artist',
-    name: 'Billie Eilish',
-    followers: '50M seguidores',
-    image: 'https://via.placeholder.com/60x60/20B2AA/FFFFFF?text=BE',
-  },
-  {
-    type: 'album',
-    title: 'folklore',
-    artist: 'Taylor Swift',
-    year: '2020',
-    image: 'https://via.placeholder.com/60x60/FF6B6B/FFFFFF?text=TS',
-  },
-];
+// Resultados de ejemplo eliminados: se usarán canciones locales
 
 export default function SearchScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [results, setResults] = useState<LocalSong[]>([]);
 
   const { 
     currentSong, 
@@ -97,17 +70,10 @@ export default function SearchScreen({ navigation }: any) {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setIsSearching(query.length > 0);
-    
     if (query.length > 0) {
-      // Datos de ejemplo para búsqueda
-      const exampleResults = [
-        { id: '1', title: 'Shape of You', artist: 'Ed Sheeran', album: '÷ (Divide)', image: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=SO' },
-        { id: '2', title: 'Perfect', artist: 'Ed Sheeran', album: '÷ (Divide)', image: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=P' },
-        { id: '3', title: 'Thinking Out Loud', artist: 'Ed Sheeran', album: 'x', image: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=TOL' },
-      ];
-      setSearchResults(exampleResults);
+      setResults(searchLocalSongs(query));
     } else {
-      setSearchResults([]);
+      setResults([]);
     }
   };
 
@@ -115,30 +81,20 @@ export default function SearchScreen({ navigation }: any) {
     return (
       <View style={styles.resultsContainer}>
         <Text style={styles.resultsTitle}>Resultados para "{searchQuery}"</Text>
-
-        {searchResults.length === 0 ? (
+        {results.length === 0 ? (
           <View style={styles.emptyResults}>
             <Ionicons name="search" size={48} color={Colors.textTertiary} />
             <Text style={styles.emptyText}>No se encontraron resultados</Text>
           </View>
         ) : (
-          searchResults.map((result, index) => (
-            <TouchableOpacity
-              key={`search_${result.id}_${index}`}
-              style={styles.resultItem}
-            >
-              <Image source={{ uri: result.image }} style={styles.trackImage} />
-              <View style={styles.trackInfo}>
-                <Text style={styles.trackTitle}>{result.title}</Text>
-                <Text style={styles.trackArtist}>{result.artist} • {result.album}</Text>
-              </View>
-              <View style={styles.trackActions}>
-                <TouchableOpacity style={styles.playButton}>
-                  <Ionicons name="play" size={20} color={Colors.text} />
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          ))
+          <LocalSongList
+            songs={results}
+            onSongPress={(song) => {
+              navigation.navigate('NowPlaying', { song });
+            }}
+            showAlbumArt={true}
+            showDuration={true}
+          />
         )}
       </View>
     );
@@ -260,13 +216,14 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingHorizontal: 20,
-    marginBottom: 30,
+    marginBottom: 32,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: 15,
+    marginBottom: 16,
+    letterSpacing: -0.3,
   },
   trendingContainer: {
     flexDirection: 'row',
@@ -294,21 +251,21 @@ const styles = StyleSheet.create({
   },
   genreCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 15,
-    marginRight: 15,
+    borderRadius: 18,
+    padding: 18,
+    marginRight: 16,
     alignItems: 'center',
-    minWidth: 100,
-    ...Shadows.small,
+    minWidth: 110,
+    ...Shadows.medium,
   },
   genreIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
     ...Shadows.medium,
   },
   genreName: {

@@ -10,8 +10,10 @@ import {
     View,
 } from 'react-native';
 import { CustomButton } from '../components/CustomButton';
+import { LocalSongList } from '../components/LocalSongList';
 import { MiniPlayer } from '../components/MiniPlayer';
 import { Colors, Shadows } from '../constants/Colors';
+import { localSongs } from '../data/localMusic';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 
 const profileOptions = [
@@ -53,10 +55,10 @@ const profileOptions = [
 ];
 
 const quickStats = [
-  { label: 'Canciones guardadas', value: '234' },
-  { label: 'Playlists creadas', value: '12' },
-  { label: 'Horas escuchadas', value: '1,247' },
-  { label: 'Artistas seguidos', value: '45' },
+  { label: 'Canciones locales', value: String(localSongs.length) },
+  { label: 'Playlists creadas', value: '0' },
+  { label: 'Horas escuchadas', value: '—' },
+  { label: 'Artistas seguidos', value: '—' },
 ];
 
 export default function ProfileScreen({ navigation }: any) {
@@ -144,6 +146,22 @@ export default function ProfileScreen({ navigation }: any) {
         </View>
       </View>
 
+      {/* Tus canciones */}
+      <View style={styles.optionsContainer}>
+        <Text style={styles.optionsTitle}>Tus canciones</Text>
+        {localSongs.length > 0 ? (
+          <LocalSongList
+            songs={localSongs}
+            onSongPress={(song) => navigation.navigate('NowPlaying', { song })}
+            showAlbumArt={true}
+            showDuration={true}
+            scrollEnabled={false}
+          />
+        ) : (
+          <Text style={styles.settingSubtitle}>Aún no tienes canciones locales</Text>
+        )}
+      </View>
+
       {/* Opciones del perfil */}
       <View style={styles.optionsContainer}>
         <Text style={styles.optionsTitle}>Configuración</Text>
@@ -197,7 +215,7 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 32,
     paddingHorizontal: 20,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
@@ -226,15 +244,16 @@ const styles = StyleSheet.create({
     ...Shadows.small,
   },
   userName: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: 5,
+    marginBottom: 6,
+    letterSpacing: -0.3,
   },
   userEmail: {
-    fontSize: 16,
+    fontSize: 15,
     color: Colors.textSecondary,
-    marginBottom: 20,
+    marginBottom: 22,
   },
   editButton: {
     backgroundColor: Colors.surfaceSecondary,

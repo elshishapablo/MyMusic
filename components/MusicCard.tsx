@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { Colors, Shadows } from './../constants/Colors';
 
 const { width } = Dimensions.get('window');
 
@@ -68,12 +69,12 @@ export const MusicCard: React.FC<MusicCardProps> = ({
         <Image source={{ uri: image }} style={styles.image} />
         {showPlayButton && (
           <View style={styles.playButton}>
-            <Ionicons name="play" size={20} color="#fff" />
+            <Ionicons name="play" size={18} color={Colors.text} />
           </View>
         )}
         {type === 'artist' && (
           <View style={styles.typeIcon}>
-            <Ionicons name={getIconName()} size={16} color="#20B2AA" />
+            <Ionicons name={getIconName()} size={16} color={Colors.primary} />
           </View>
         )}
       </View>
@@ -98,16 +99,9 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    borderRadius: 8,
+    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    ...Shadows.medium,
   },
   image: {
     width: '100%',
@@ -115,45 +109,42 @@ const styles = StyleSheet.create({
   },
   playButton: {
     position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: '#20B2AA',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
+    bottom: 10,
+    right: 10,
+    backgroundColor: Colors.primary,
+    borderRadius: 24,
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    ...Shadows.medium,
   },
   typeIcon: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 14,
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.primary,
   },
   textContainer: {
-    marginTop: 8,
+    marginTop: 10,
+    paddingHorizontal: 2,
   },
   title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.text,
     marginBottom: 4,
+    letterSpacing: 0.2,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#ccc',
+    fontSize: 13,
+    color: Colors.textSecondary,
   },
 });

@@ -15,6 +15,50 @@ export interface LocalSong {
 
 export const localSongs: LocalSong[] = [
   {
+    id: 'aguacero',
+    title: 'Aguacero',
+    artist: 'Bad Bunny',
+    album: 'Un Verano Sin Ti',
+    duration: '3:30',
+    audioFile: require('../assets/audio/Bad Bunny - Aguacero (LetraLyrics).mp3'),
+    coverImage: require('../assets/images/artists/Bad-Bunny-1.png'),
+    genre: 'Reggaeton',
+    year: 2022
+  },
+  {
+    id: 'eoo',
+    title: 'EoO',
+    artist: 'Bad Bunny',
+    album: 'Un Verano Sin Ti',
+    duration: '3:45',
+    audioFile: require('../assets/audio/Bad Bunny - EoO (Video Lyrics).mp3'),
+    coverImage: require('../assets/images/portadas/eoo.jpg'),
+    genre: 'Reggaeton',
+    year: 2022
+  },
+  {
+    id: 'que-locura',
+    title: 'Que Locura',
+    artist: 'J. Balvin',
+    album: 'Que Locura',
+    duration: '3:18',
+    audioFile: require('../assets/audio/J. Balvin - Que Locura (LetraLyric).mp3'),
+    coverImage: require('../assets/images/portadas/quelocura.jpg'),
+    genre: 'Reggaeton',
+    year: 2021
+  },
+  {
+    id: 'abracadabra',
+    title: 'Abracadabra',
+    artist: 'Lady Gaga',
+    album: 'Chromatica',
+    duration: '3:50',
+    audioFile: require('../assets/audio/Lady Gaga - Abracadabra (Lyrics).mp3'),
+    coverImage: require('../assets/images/portadas/Abracadabra.jpg'),
+    genre: 'Pop',
+    year: 2020
+  },
+  {
     id: 'dont-cry',
     title: "Don't Cry",
     artist: 'Guns N\' Roses',

@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+import { View } from 'react-native';
 import MiniPlayer from './components/MiniPlayer';
 import { Colors } from './constants/Colors';
 import { AudioProvider } from './contexts';
@@ -34,33 +35,105 @@ function TabNavigator() {
             iconName = 'home-outline';
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return (
+            <View style={{ 
+              width: 44, 
+              height: 44, 
+              borderRadius: 22, 
+              backgroundColor: focused ? Colors.primary : 'transparent',
+              justifyContent: 'center',
+              alignItems: 'center',
+              shadowColor: focused ? Colors.primary : 'transparent',
+              shadowOffset: {
+                width: 0,
+                height: 4,
+              },
+              shadowOpacity: focused ? 0.5 : 0,
+              shadowRadius: 8,
+              elevation: focused ? 8 : 0,
+            }}>
+              <Ionicons 
+                name={iconName} 
+                size={focused ? 24 : 22} 
+                color={focused ? '#1A1A1A' : Colors.textSecondary} 
+              />
+            </View>
+          );
         },
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textTertiary,
+        tabBarActiveTintColor: Colors.text,
+        tabBarInactiveTintColor: Colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.border,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          position: 'absolute',
+          bottom: 20,
+          left: 20,
+          right: 20,
+          backgroundColor: '#2D2D2D',
+          borderRadius: 35,
+          height: 72,
+          paddingVertical: 0,
+          paddingHorizontal: 16,
+          borderTopWidth: 0,
+          borderWidth: 1.5,
+          borderColor: 'rgba(255, 107, 157, 0.2)',
+          elevation: 35,
+          shadowColor: Colors.primary,
+          shadowOffset: {
+            width: 0,
+            height: 12,
+          },
+          shadowOpacity: 0.4,
+          shadowRadius: 25,
         },
-        headerStyle: {
-          backgroundColor: Colors.surface,
-          borderBottomColor: Colors.border,
-          borderBottomWidth: 1,
+        tabBarItemStyle: {
+          paddingVertical: 0,
+          justifyContent: 'center',
+          alignItems: 'center',
+          flex: 1,
+          height: '100%',
         },
-        headerTintColor: Colors.text,
-        headerTitleStyle: {
-          fontWeight: 'bold',
+        tabBarIconStyle: {
+          marginTop: 0,
+          marginBottom: 0,
+          justifyContent: 'center',
+          alignItems: 'center',
+          flex: 1,
         },
+        tabBarLabelStyle: {
+          fontSize: 0,
+          height: 0,
+        },
+        tabBarShowLabel: false,
+        headerShown: false,
       })}
     >
-      <Tab.Screen name="Inicio" component={TrackListScreen} />
-      <Tab.Screen name="Biblioteca" component={LibraryScreen} />
-      <Tab.Screen name="Buscar" component={SearchScreen} />
-      <Tab.Screen name="Perfil" component={ProfileScreen} />
+      <Tab.Screen 
+        name="Inicio" 
+        component={TrackListScreen}
+        options={{
+          tabBarLabel: 'Inicio',
+        }}
+      />
+      <Tab.Screen 
+        name="Biblioteca" 
+        component={LibraryScreen}
+        options={{
+          tabBarLabel: 'Biblioteca',
+        }}
+      />
+      <Tab.Screen 
+        name="Buscar" 
+        component={SearchScreen}
+        options={{
+          tabBarLabel: 'Buscar',
+        }}
+      />
+      <Tab.Screen 
+        name="Perfil" 
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Perfil',
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -70,7 +143,12 @@ export default function App() {
     <AudioProvider>
       <NavigationContainer>
         <StatusBar style="light" />
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator 
+          screenOptions={{ 
+            headerShown: false,
+            animation: 'slide_from_bottom',
+          }}
+        >
           <Stack.Screen name="Main" component={TabNavigator} />
           <Stack.Screen 
             name="NowPlaying" 
@@ -78,6 +156,7 @@ export default function App() {
             options={{
               headerShown: false,
               presentation: 'modal',
+              animation: 'slide_from_bottom',
             }}
           />
         </Stack.Navigator>

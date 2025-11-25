@@ -1,174 +1,83 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    FlatList,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { LocalSongList } from '../components/LocalSongList';
 import MiniPlayer from '../components/MiniPlayer';
 import { Colors, Shadows } from '../constants/Colors';
+import { artistImages } from '../data/artists';
 import { localSongs, searchLocalSongs } from '../data/localMusic';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
-// Datos de ejemplo para la biblioteca
-const demoPlaylists = [
-  {
-    id: '1',
-    name: 'Mi Playlist Favorita',
-    songs: 25,
-    image: 'https://via.placeholder.com/100x100/20B2AA/FFFFFF?text=MPF',
-    owner: 'Usuario',
-  },
-  {
-    id: '2',
-    name: 'Rock Clásico',
-    songs: 18,
-    image: 'https://via.placeholder.com/100x100/FF6B6B/FFFFFF?text=RC',
-    owner: 'Usuario',
-  },
-  {
-    id: '3',
-    name: 'Pop Hits 2024',
-    songs: 32,
-    image: 'https://via.placeholder.com/100x100/4ECDC4/FFFFFF?text=PH',
-    owner: 'Usuario',
-  },
-];
+// Derivaciones simples de tu música local
 
-const demoAlbums = [
-  {
-    id: '1',
-    name: 'Thriller',
-    artist: 'Michael Jackson',
-    year: 1982,
-    image: 'https://via.placeholder.com/100x100/1DB954/FFFFFF?text=T',
-  },
-  {
-    id: '2',
-    name: 'Abbey Road',
-    artist: 'The Beatles',
-    year: 1969,
-    image: 'https://via.placeholder.com/100x100/FFD700/FFFFFF?text=AR',
-  },
-  {
-    id: '3',
-    name: 'Dark Side of the Moon',
-    artist: 'Pink Floyd',
-    year: 1973,
-    image: 'https://via.placeholder.com/100x100/9B59B6/FFFFFF?text=DS',
-  },
-];
+const buildAlbumsFromLocal = () => {
+  const map = new Map<string, { id: string; name: string; artist: string; year?: number; cover: any }>();
+  localSongs.forEach((s) => {
+    if (!s.album) return;
+    const key = s.album;
+    if (!map.has(key)) {
+      const primaryArtist = getPrimaryArtist(s.artist);
+      map.set(key, { id: key, name: s.album, artist: primaryArtist, year: s.year, cover: s.coverImage });
+    }
+  });
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+};
 
-const demoArtists = [
-  {
-    id: '1',
-    name: 'Michael Jackson',
-    followers: '50M',
-    image: 'https://via.placeholder.com/100x100/1DB954/FFFFFF?text=MJ',
-  },
-  {
-    id: '2',
-    name: 'The Beatles',
-    followers: '45M',
-    image: 'https://via.placeholder.com/100x100/FFD700/FFFFFF?text=TB',
-  },
-  {
-    id: '3',
-    name: 'Queen',
-    followers: '40M',
-    image: 'https://via.placeholder.com/100x100/FF6B6B/FFFFFF?text=Q',
-  },
-];
+const allowedArtists = new Set([
+  'Dua Lipa',
+  'Imagine Dragons',
+  'Sam Smith',
+  "Guns N' Roses",
+]);
 
-const demoMusic = [
-  {
-    id: '1',
-    title: 'Billie Jean',
-    artist: 'Michael Jackson',
-    album: 'Thriller',
-    duration: 294,
-    image: 'https://via.placeholder.com/50x50/1DB954/FFFFFF?text=BJ',
-  },
-  {
-    id: '2',
-    title: 'Bohemian Rhapsody',
-    artist: 'Queen',
-    album: 'A Night at the Opera',
-    duration: 355,
-    image: 'https://via.placeholder.com/50x50/FF6B6B/FFFFFF?text=BR',
-  },
-  {
-    id: '3',
-    title: 'Imagine',
-    artist: 'John Lennon',
-    album: 'Imagine',
-    duration: 183,
-    image: 'https://via.placeholder.com/50x50/4ECDC4/FFFFFF?text=I',
-  },
-];
+const getPrimaryArtist = (artistField: string): string => {
+  const normalized = artistField
+    .replace(/\s+ft\.?\s+/i, ' & ')
+    .replace(/\s+feat\.?\s+/i, ' & ')
+    .replace(/\s+featuring\s+/i, ' & ');
+  const separators = [',', '&'];
+  let primary = normalized;
+  for (const sep of separators) {
+    if (primary.includes(sep)) {
+      primary = primary.split(sep)[0];
+    }
+  }
+  return primary.trim();
+};
 
-// Datos de ejemplo
-const userPlaylists = [
-  {
-    id: '1',
-    name: 'Mi Playlist Favorita',
-    songs: 25,
-    image: 'https://via.placeholder.com/100x100/20B2AA/FFFFFF?text=MPF',
-    lastPlayed: 'Hace 2 horas',
-  },
-  {
-    id: '2',
-    name: 'Música para trabajar',
-    songs: 15,
-    image: 'https://via.placeholder.com/100x100/FF6B6B/FFFFFF?text=MT',
-    lastPlayed: 'Ayer',
-  },
-  {
-    id: '3',
-    name: 'Gym Session',
-    songs: 30,
-    image: 'https://via.placeholder.com/100x100/4ECDC4/FFFFFF?text=GS',
-    lastPlayed: 'Hace 3 días',
-  },
-];
+const buildArtistsFromLocal = () => {
+  const map = new Map<string, { id: string; name: string }>();
+  localSongs.forEach((s) => {
+    const primary = getPrimaryArtist(s.artist);
+    if (allowedArtists.has(primary) && !map.has(primary)) {
+      map.set(primary, { id: primary, name: primary });
+    }
+  });
+  return Array.from(map.values());
+};
 
-const recentAlbums = [
-  {
-    id: '1',
-    title: 'Album Favorito',
-    artist: 'Artista Favorito',
-    year: '2024',
-    image: 'https://via.placeholder.com/100x100/45B7D1/FFFFFF?text=AF',
-  },
-  {
-    id: '2',
-    title: 'Nuevo Lanzamiento',
-    artist: 'Nuevo Artista',
-    year: '2024',
-    image: 'https://via.placeholder.com/100x100/96CEB4/FFFFFF?text=NL',
-  },
-];
-
-const librarySections = [
-  { title: 'Playlists', icon: 'list', count: userPlaylists.length },
-  { title: 'Álbumes', icon: 'albums', count: recentAlbums.length },
-  { title: 'Artistas', icon: 'people', count: 45 },
-  { title: 'Canciones Locales', icon: 'musical-notes', count: localSongs.length },
-  { title: 'Descargadas', icon: 'download', count: 12 },
-  { title: 'Historial', icon: 'time', count: 89 },
-];
+const getFallbackArtistCover = (artistName: string) => {
+  for (const s of localSongs) {
+    if (getPrimaryArtist(s.artist) === artistName) {
+      return s.coverImage;
+    }
+  }
+  return undefined;
+};
 
 export default function LibraryScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSection, setSelectedSection] = useState('Playlists');
-  const [userPlaylistsData] = useState(demoPlaylists);
-  const [userAlbumsData] = useState(demoAlbums);
-  const [userArtistsData] = useState(demoArtists);
-  const [userSongsData] = useState(demoMusic);
+  const [selectedSection, setSelectedSection] = useState('Canciones');
+  const albums = buildAlbumsFromLocal();
+  const artists = buildArtistsFromLocal();
   
   const { 
     playSong, 
@@ -227,39 +136,42 @@ export default function LibraryScreen({ navigation }: any) {
     ? searchLocalSongs(searchQuery)
     : localSongs;
 
-  const renderPlaylists = () => (
+  const renderSongs = () => (
     <View style={styles.contentSection}>
-      {userPlaylistsData.map((playlist) => (
-        <TouchableOpacity key={playlist.id} style={styles.playlistItem}>
-          <Image source={{ uri: playlist.image }} style={styles.playlistImage} />
-          <View style={styles.playlistInfo}>
-            <Text style={styles.playlistName}>{playlist.name}</Text>
-            <Text style={styles.playlistDetails}>
-              {playlist.songs} canciones • {playlist.owner}
-            </Text>
-          </View>
-          <TouchableOpacity style={styles.moreButton}>
-            <Ionicons name="ellipsis-horizontal" size={20} color="#ccc" />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      ))}
+      {filteredLocalSongs.length > 0 ? (
+        <LocalSongList
+          songs={filteredLocalSongs}
+          onSongPress={handleLocalSongPress}
+          currentPlayingSongId={currentSong?.id}
+          showAlbumArt={true}
+          showDuration={true}
+          scrollEnabled={false}
+        />
+      ) : (
+        <Text style={styles.emptyText}>
+          {searchQuery ? 'No se encontraron canciones' : 'No tienes canciones locales'}
+        </Text>
+      )}
     </View>
   );
 
   const renderAlbums = () => (
     <View style={styles.contentSection}>
-      {userAlbumsData.map((album) => (
-        <TouchableOpacity key={album.id} style={styles.albumItem}>
-          <Image source={{ uri: album.image }} style={styles.albumImage} />
-          <View style={styles.albumInfo}>
-            <Text style={styles.albumTitle}>{album.name}</Text>
-            <Text style={styles.albumArtist}>{album.artist} • {album.year}</Text>
-          </View>
-          <TouchableOpacity style={styles.moreButton}>
-            <Ionicons name="ellipsis-horizontal" size={20} color="#ccc" />
+      <FlatList
+        data={albums}
+        keyExtractor={(item) => item.id}
+        numColumns={3}
+        showsVerticalScrollIndicator={false}
+        columnWrapperStyle={styles.albumColumn}
+        contentContainerStyle={styles.albumList}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.albumGridItem} activeOpacity={0.8}>
+            <Image source={item.cover} style={styles.albumGridImage} resizeMode="cover" />
+            <Text style={styles.albumGridTitle} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+            <Text style={styles.albumGridSubtitle} numberOfLines={1} ellipsizeMode="tail">{item.artist}{item.year ? ` • ${item.year}` : ''}</Text>
           </TouchableOpacity>
-        </TouchableOpacity>
-      ))}
+        )}
+      />
     </View>
   );
 
@@ -278,13 +190,17 @@ export default function LibraryScreen({ navigation }: any) {
           />
         </View>
         <TouchableOpacity style={styles.sortButton}>
-          <Ionicons name="swap-vertical" size={24} color="#20B2AA" />
+          <Ionicons name="swap-vertical" size={24} color={Colors.primary} />
         </TouchableOpacity>
       </View>
 
       {/* Secciones de la biblioteca */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sectionsContainer}>
-        {librarySections.map((section) => (
+        {[
+          { title: 'Canciones', icon: 'musical-notes', count: localSongs.length },
+          { title: 'Artistas', icon: 'people', count: artists.length },
+          { title: 'Álbumes', icon: 'albums', count: albums.length },
+        ].map((section) => (
           <TouchableOpacity
             key={section.title}
             style={[
@@ -296,7 +212,7 @@ export default function LibraryScreen({ navigation }: any) {
             <Ionicons
               name={section.icon as any}
               size={20}
-              color={selectedSection === section.title ? '#20B2AA' : '#ccc'}
+              color={selectedSection === section.title ? Colors.primary : Colors.textTertiary}
             />
             <Text
               style={[
@@ -311,39 +227,76 @@ export default function LibraryScreen({ navigation }: any) {
         ))}
       </ScrollView>
 
-      {/* Contenido según la sección seleccionada */}
-      <ScrollView 
-        style={styles.content} 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={isMiniPlayerVisible ? styles.scrollContentWithMiniPlayer : styles.scrollContent}
-      >
-        {selectedSection === 'Playlists' && renderPlaylists()}
-        {selectedSection === 'Álbumes' && renderAlbums()}
-        
-        {selectedSection === 'Artistas' && (
-          <View style={styles.contentSection}>
-            <Text style={styles.emptyText}>Artistas aparecerán aquí</Text>
-          </View>
-        )}
-        
-        {selectedSection === 'Canciones Locales' && (
-          <View style={styles.contentSection}>
-            {filteredLocalSongs.length > 0 ? (
-              <LocalSongList
-                songs={filteredLocalSongs}
-                onSongPress={handleLocalSongPress}
-                currentPlayingSongId={currentSong?.id}
-                showAlbumArt={true}
-                showDuration={true}
-              />
-            ) : (
+      {/* Contenido según la sección seleccionada: un SOLO scroller por sección */}
+      {selectedSection === 'Canciones' && (
+        <View style={styles.content}>
+          {filteredLocalSongs.length > 0 ? (
+            <LocalSongList
+              songs={filteredLocalSongs}
+              onSongPress={handleLocalSongPress}
+              currentPlayingSongId={currentSong?.id}
+              showAlbumArt={true}
+              showDuration={true}
+              scrollEnabled={true}
+              bottomSpacing={isMiniPlayerVisible ? 200 : 100}
+            />
+          ) : (
+            <View style={styles.contentSection}>
               <Text style={styles.emptyText}>
                 {searchQuery ? 'No se encontraron canciones' : 'No tienes canciones locales'}
               </Text>
-            )}
+            </View>
+          )}
+        </View>
+      )}
+
+      {selectedSection === 'Álbumes' && (
+        <View style={styles.content}>
+          <View style={styles.contentSection}>
+            <FlatList
+              data={albums}
+              keyExtractor={(item) => item.id}
+              numColumns={4}
+              showsVerticalScrollIndicator={false}
+              columnWrapperStyle={styles.albumColumn}
+              contentContainerStyle={styles.albumList}
+              ListFooterComponent={() => <View style={{ height: isMiniPlayerVisible ? 200 : 100 }} />}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.albumGridItem} activeOpacity={0.8}>
+                  <Image source={item.cover} style={styles.albumGridImage} resizeMode="cover" />
+                  <Text style={styles.albumGridTitle} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+                  <Text style={styles.albumGridSubtitle} numberOfLines={1} ellipsizeMode="tail">{item.artist}{item.year ? ` • ${item.year}` : ''}</Text>
+                </TouchableOpacity>
+              )}
+            />
           </View>
-        )}
-      </ScrollView>
+        </View>
+      )}
+
+      {selectedSection === 'Artistas' && (
+        <View style={styles.content}>
+          <FlatList
+            data={artists}
+            keyExtractor={(item) => item.id}
+            numColumns={6}
+            showsVerticalScrollIndicator={false}
+            columnWrapperStyle={styles.artistColumn}
+            contentContainerStyle={styles.artistList}
+            ListFooterComponent={() => <View style={{ height: isMiniPlayerVisible ? 120 : 20 }} />}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.artistGridItem} activeOpacity={0.8}>
+                {artistImages[item.name]
+                  ? <Image source={artistImages[item.name]} style={styles.artistImage} resizeMode="cover" />
+                  : getFallbackArtistCover(item.name)
+                    ? <Image source={getFallbackArtistCover(item.name) as any} style={styles.artistImage} resizeMode="cover" />
+                    : <View style={styles.artistAvatar}><Ionicons name="person" size={18} color={Colors.text} /></View>
+                }
+                <Text style={styles.artistTitle} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      )}
 
       {/* Mini Player */}
       {isMiniPlayerVisible && (
@@ -494,6 +447,161 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     backgroundColor: Colors.surfaceSecondary,
   },
+  sectionHeading: {
+    color: Colors.text,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  playlistsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  playlistCard: {
+    width: '48%',
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 12,
+    ...Shadows.small,
+  },
+  playlistThumbRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  playlistThumb: {
+    width: '48%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    marginRight: '4%',
+    marginBottom: '4%',
+  },
+  playlistCardTitle: {
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 6,
+  },
+  playlistCardMeta: {
+    color: Colors.textTertiary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  horizontalScroll: {
+    paddingHorizontal: 20,
+  },
+  recentCard: {
+    width: 120,
+    marginRight: 12,
+  },
+  recentImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 12,
+    ...Shadows.small,
+  },
+  recentTitle: {
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 6,
+  },
+  recentArtist: {
+    color: Colors.textTertiary,
+    fontSize: 12,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  gridItem: {
+    width: '48%',
+    marginBottom: 16,
+  },
+  gridImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 12,
+    marginBottom: 8,
+    ...Shadows.small,
+  },
+  gridTitle: {
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  gridSubtitle: {
+    color: Colors.textTertiary,
+    fontSize: 12,
+  },
+  // Álbumes (3 columnas, más compacto)
+  albumGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  albumList: {
+    paddingHorizontal: 20,
+  },
+  albumColumn: {
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  albumGridItem: {
+    flexBasis: '23%',
+    maxWidth: '23%',
+  },
+  albumGridImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 6,
+    marginBottom: 3,
+  },
+  albumGridTitle: {
+    color: Colors.text,
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  albumGridSubtitle: {
+    color: Colors.textTertiary,
+    fontSize: 9,
+  },
+  // Artistas (3 columnas)
+  artistList: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  artistColumn: {
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  artistGridItem: {
+    flexBasis: '15.5%',
+    maxWidth: '15.5%',
+    marginBottom: 6,
+  },
+  artistAvatar: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 999,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  artistImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    marginBottom: 2,
+  },
+  artistTitle: {
+    color: Colors.text,
+    fontSize: 9,
+    fontWeight: '500',
+  },
+  
   emptyText: {
     color: Colors.textSecondary,
     textAlign: 'center',
