@@ -1,20 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    Dimensions,
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Dimensions,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAudio } from '../contexts/AudioProvider';
 import { Colors, Shadows } from '../constants/Colors';
-import { localSongs, searchLocalSongs, getLocalSongsByGenre } from '../data/localMusic';
+import { useAudio } from '../contexts/AudioProvider';
+import { getLocalSongsByGenre, localSongs, searchLocalSongs } from '../data/localMusic';
 
 const { width } = Dimensions.get('window');
 
@@ -114,19 +114,19 @@ export default function SearchScreen({ navigation }: any) {
       return (
         <View style={styles.emptyState}>
           <Ionicons name="search-outline" size={64} color={Colors.textTertiary} />
-          <Text style={styles.emptyText}>No results found</Text>
-          <Text style={styles.emptySubtext}>
-            Try searching for a song, artist, or album
-          </Text>
+           <Text style={styles.emptyText}>No se encontraron resultados</Text>
+           <Text style={styles.emptySubtext}>
+             Intenta buscar una canción, artista o álbum
+           </Text>
         </View>
       );
     }
 
     return (
       <View style={styles.resultsContainer}>
-        <Text style={styles.resultsTitle}>
-          Results for "{searchQuery}"
-        </Text>
+         <Text style={styles.resultsTitle}>
+           Resultados para "{searchQuery}"
+         </Text>
         <FlatList
           data={results}
           renderItem={renderSongResult}
@@ -148,7 +148,7 @@ export default function SearchScreen({ navigation }: any) {
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <Ionicons name="trending-up" size={20} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Popular Searches</Text>
+             <Text style={styles.sectionTitle}>Búsquedas Populares</Text>
           </View>
         </View>
         <View style={styles.trendingContainer}>
@@ -170,7 +170,7 @@ export default function SearchScreen({ navigation }: any) {
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <Ionicons name="grid" size={20} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Browse by Genre</Text>
+             <Text style={styles.sectionTitle}>Explorar por Género</Text>
           </View>
         </View>
         <FlatList
@@ -186,7 +186,7 @@ export default function SearchScreen({ navigation }: any) {
                 <View style={styles.genreCardContent}>
                   <Ionicons name="musical-notes" size={24} color={Colors.primary} />
                   <Text style={styles.genreCardName}>{item}</Text>
-                  <Text style={styles.genreCardCount}>{genreSongs.length} songs</Text>
+                   <Text style={styles.genreCardCount}>{genreSongs.length} canciones</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -211,7 +211,7 @@ export default function SearchScreen({ navigation }: any) {
           <Ionicons name="search" size={20} color={Colors.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search playlist or song"
+             placeholder="Buscar canciones o artistas"
             placeholderTextColor={Colors.textTertiary}
             value={searchQuery}
             onChangeText={handleSearch}

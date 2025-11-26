@@ -85,9 +85,9 @@ const FavoritesScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Favorites</Text>
+        <Text style={styles.headerTitle}>Favoritos</Text>
         <Text style={styles.headerSubtitle}>
-          {favoriteSongs.length} {favoriteSongs.length === 1 ? 'song' : 'songs'}
+          {favoriteSongs.length} {favoriteSongs.length === 1 ? 'canción' : 'canciones'}
         </Text>
       </View>
 
@@ -102,9 +102,9 @@ const FavoritesScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
       ) : (
         <View style={styles.emptyState}>
           <Ionicons name="heart-outline" size={64} color={Colors.textTertiary} />
-          <Text style={styles.emptyText}>No favorites yet</Text>
+          <Text style={styles.emptyText}>Aún no tienes favoritos</Text>
           <Text style={styles.emptySubtext}>
-            Tap the heart icon on any song to add it to favorites
+            Toca el ícono de corazón en cualquier canción para agregarla a favoritos
           </Text>
         </View>
       )}

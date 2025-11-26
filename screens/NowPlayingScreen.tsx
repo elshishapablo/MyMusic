@@ -2,18 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    ImageBackground,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    PanResponder,
+  Dimensions,
+  Image,
+  ImageBackground,
+  PanResponder,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAudio } from '../contexts/AudioProvider';
 import { Colors, Shadows } from '../constants/Colors';
+import { useAudio } from '../contexts/AudioProvider';
 
 const { width, height } = Dimensions.get('window');
 
@@ -145,7 +145,7 @@ const NowPlayingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             <Ionicons name="arrow-back" size={24} color={Colors.text} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>Today's top hits</Text>
+             <Text style={styles.headerTitle}>Los éxitos de hoy</Text>
           </View>
           <TouchableOpacity 
             style={styles.headerButton}

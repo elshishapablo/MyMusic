@@ -1,22 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    Dimensions,
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors, Shadows } from '../constants/Colors';
 import { useAudio } from '../contexts/AudioProvider';
 import { useUser } from '../contexts/UserProvider';
-import { Colors, Shadows } from '../constants/Colors';
 import { artistImages } from '../data/artists';
-import { localSongs, getLocalSongsByGenre } from '../data/localMusic';
+import { getLocalSongsByGenre, localSongs } from '../data/localMusic';
 
 const { width } = Dimensions.get('window');
 
@@ -177,7 +177,7 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
         <View style={styles.genreCardContent}>
           <Ionicons name="musical-notes" size={24} color={Colors.primary} />
           <Text style={styles.genreCardName}>{item}</Text>
-          <Text style={styles.genreCardCount}>{genreSongs.length} songs</Text>
+          <Text style={styles.genreCardCount}>{genreSongs.length} canciones</Text>
         </View>
       </TouchableOpacity>
     );
@@ -236,7 +236,7 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
             <Ionicons name="search" size={20} color={Colors.textSecondary} style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search playlist or song"
+              placeholder="Buscar canciones o playlists"
               placeholderTextColor={Colors.textTertiary}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -249,7 +249,7 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleRow}>
               <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
-              <Text style={styles.sectionTitle}>Your Songs</Text>
+              <Text style={styles.sectionTitle}>Tu Música</Text>
             </View>
             <TouchableOpacity activeOpacity={0.7}>
               <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
@@ -291,7 +291,7 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleRow}>
               <Ionicons name="grid" size={20} color={Colors.primary} />
-              <Text style={styles.sectionTitle}>Categories</Text>
+              <Text style={styles.sectionTitle}>Categorías</Text>
             </View>
             <TouchableOpacity activeOpacity={0.7}>
               <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
