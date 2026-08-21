@@ -36,21 +36,31 @@ const LoginScreen: React.FC = () => {
     }
   };
 
+  const handleDemo = async () => {
+    setIsLoading(true);
+    try {
+      await login('pablo', 'demo');
+    } catch (error) {
+      console.error('Demo login error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={[styles.content, { paddingTop: insets.top }]}>
-        {/* Logo/Icono */}
+        <Text style={styles.brand}>MyMusic</Text>
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Ionicons name="musical-notes" size={64} color={Colors.primary} />
+            <Ionicons name="musical-notes" size={56} color={Colors.primary} />
           </View>
         </View>
 
-        {/* Título */}
-        <Text style={styles.title}>Bienvenido</Text>
+        <Text style={styles.title}>Tu ritmo empieza aquí</Text>
         <Text style={styles.subtitle}>Inicia sesión para continuar</Text>
 
         {/* Formulario */}
@@ -94,6 +104,15 @@ const LoginScreen: React.FC = () => {
               <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
             )}
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.demoButton}
+            onPress={handleDemo}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.demoButtonText}>Entrar como demo</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -110,32 +129,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 30,
   },
+  brand: {
+    textAlign: 'center',
+    fontSize: 13,
+    letterSpacing: 4,
+    textTransform: 'uppercase',
+    color: Colors.primary,
+    fontWeight: '800',
+    marginBottom: 24,
+  },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 28,
   },
   logoCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: Colors.surfaceSecondary,
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
     justifyContent: 'center',
     alignItems: 'center',
     ...Shadows.large,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 30,
+    fontWeight: '800',
     color: Colors.text,
     textAlign: 'center',
     marginBottom: 8,
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 36,
   },
   form: {
     width: '100%',
@@ -143,12 +173,13 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceSecondary,
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    height: 56,
-    ...Shadows.small,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 18,
+    marginBottom: 14,
+    height: 54,
   },
   inputIcon: {
     marginRight: 12,
@@ -161,20 +192,34 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     backgroundColor: Colors.primary,
-    borderRadius: 25,
-    height: 56,
+    borderRadius: 16,
+    height: 54,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
-    ...Shadows.medium,
+    ...Shadows.glow,
   },
   loginButtonDisabled: {
     opacity: 0.5,
   },
   loginButtonText: {
     color: Colors.background,
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  demoButton: {
+    marginTop: 14,
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  demoButtonText: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
 

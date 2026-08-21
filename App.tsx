@@ -40,44 +40,37 @@ function TabNavigator() {
 
           return (
             <View style={{ 
-              width: 44, 
-              height: 44, 
-              borderRadius: 22, 
+              width: 40, 
+              height: 40, 
+              borderRadius: 14, 
               backgroundColor: focused ? Colors.primary : 'transparent',
               justifyContent: 'center',
               alignItems: 'center',
-              shadowColor: focused ? Colors.primary : 'transparent',
-              shadowOffset: {
-                width: 0,
-                height: 4,
-              },
-              shadowOpacity: focused ? 0.5 : 0,
-              shadowRadius: 8,
-              elevation: focused ? 8 : 0,
             }}>
               <Ionicons 
                 name={iconName} 
-                size={focused ? 24 : 22} 
-                color={focused ? '#1A1A1A' : Colors.textSecondary} 
+                size={focused ? 22 : 21} 
+                color={focused ? Colors.background : Colors.textTertiary} 
               />
             </View>
           );
         },
         tabBarActiveTintColor: Colors.text,
-        tabBarInactiveTintColor: Colors.textSecondary,
+        tabBarInactiveTintColor: Colors.textTertiary,
         tabBarStyle: {
           position: 'absolute',
-          bottom: 20,
-          left: 20,
-          right: 20,
-          backgroundColor: '#2D2D2D',
-          borderRadius: 35,
-          height: 72,
+          bottom: 18,
+          left: 18,
+          right: 18,
+          backgroundColor: Colors.surface,
+          borderRadius: 24,
+          height: 68,
           paddingVertical: 0,
-          paddingHorizontal: 16,
+          paddingHorizontal: 12,
           borderTopWidth: 0,
-          borderWidth: 1.5,
-          borderColor: 'rgba(255, 107, 157, 0.2)',
+          borderWidth: 1,
+          borderColor: Colors.border,
+          elevation: 12,
         },
         tabBarItemStyle: {
           paddingVertical: 0,

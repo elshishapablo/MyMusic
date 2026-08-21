@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Shadows } from '../constants/Colors';
+import { Colors, GenrePalette, Shadows } from '../constants/Colors';
 import { useAudio } from '../contexts/AudioProvider';
 import { useUser } from '../contexts/UserProvider';
 import { artistImages } from '../data/artists';
@@ -20,7 +20,6 @@ import { getLocalSongsByGenre, localSongs } from '../data/localMusic';
 
 const { width } = Dimensions.get('window');
 
-// Función para obtener el saludo según la hora
 const getGreeting = (): string => {
   const hour = new Date().getHours();
   if (hour < 12) return 'Buenos días';
@@ -28,59 +27,49 @@ const getGreeting = (): string => {
   return 'Buenas noches';
 };
 
-// Función para obtener artistas únicos
 const getUniqueArtists = () => {
   const artistMap = new Map<string, { name: string; cover: any }>();
   localSongs.forEach((song) => {
     const primaryArtist = song.artist.split(' ft.')[0].split(' &')[0].split(',')[0].trim();
     if (!artistMap.has(primaryArtist)) {
-      // Usar la imagen del artista si está disponible, sino usar la portada de la canción
-      let coverImage = artistImages[primaryArtist] || song.coverImage;
       artistMap.set(primaryArtist, {
         name: primaryArtist,
-        cover: coverImage,
+        cover: artistImages[primaryArtist] || song.coverImage,
       });
     }
   });
   return Array.from(artistMap.values());
 };
 
-// Función para obtener géneros únicos
 const getUniqueGenres = () => {
   const genreSet = new Set<string>();
   localSongs.forEach((song) => {
-    if (song.genre) {
-      genreSet.add(song.genre);
-    }
+    if (song.genre) genreSet.add(song.genre);
   });
   return Array.from(genreSet);
 };
 
-// Función para obtener playlists (basadas en álbumes)
 const getPlaylists = () => {
-  const playlistMap = new Map<string, { id: string; name: string; artist: string; cover: any; songCount: number }>();
+  const playlistMap = new Map<
+    string,
+    { id: string; name: string; artist: string; cover: any; songCount: number }
+  >();
   localSongs.forEach((song) => {
-    if (song.album) {
-      if (!playlistMap.has(song.album)) {
-        const primaryArtist = song.artist.split(' ft.')[0].split(' &')[0].split(',')[0].trim();
-        const songsInAlbum = localSongs.filter(s => s.album === song.album);
-        // Para "Un Verano Sin Ti", usar la portada de Aguacero
-        let coverImage = song.coverImage;
-        if (song.album === 'Un Verano Sin Ti') {
-          const aguaceroSong = localSongs.find(s => s.id === 'aguacero');
-          if (aguaceroSong) {
-            coverImage = aguaceroSong.coverImage; // Ya usa aguacero.jpg
-          }
-        }
-        playlistMap.set(song.album, {
-          id: song.album,
-          name: song.album,
-          artist: primaryArtist,
-          cover: coverImage,
-          songCount: songsInAlbum.length,
-        });
-      }
+    if (!song.album || playlistMap.has(song.album)) return;
+    const primaryArtist = song.artist.split(' ft.')[0].split(' &')[0].split(',')[0].trim();
+    const songsInAlbum = localSongs.filter((s) => s.album === song.album);
+    let coverImage = song.coverImage;
+    if (song.album === 'Un Verano Sin Ti') {
+      const aguacero = localSongs.find((s) => s.id === 'aguacero');
+      if (aguacero) coverImage = aguacero.coverImage;
     }
+    playlistMap.set(song.album, {
+      id: song.album,
+      name: song.album,
+      artist: primaryArtist,
+      cover: coverImage,
+      songCount: songsInAlbum.length,
+    });
   });
   return Array.from(playlistMap.values());
 };
@@ -90,170 +79,143 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const { user } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
   const insets = useSafeAreaInsets();
-  
+
   const greeting = getGreeting();
-  const topSongs = localSongs.slice(0, 15);
-  const artists = getUniqueArtists();
-  const genres = getUniqueGenres();
-  const playlists = getPlaylists();
+  const featured = localSongs[0];
+  // Evitar duplicar la portada del hero en la fila "Tu música"
+  const topSongs = localSongs.slice(1, 13);
+  const artists = useMemo(() => getUniqueArtists(), []);
+  const genres = useMemo(() => getUniqueGenres(), []);
+  const playlists = useMemo(() => getPlaylists(), []);
 
   const handleTrackPress = async (track: any) => {
     if (currentTrack?.id === track.id) {
-      if (navigation) {
-        navigation.navigate('NowPlaying');
-      }
+      navigation?.navigate('NowPlaying');
       return;
     }
     await playNewSong(track);
-    if (navigation) {
-      navigation.navigate('NowPlaying');
-    }
-  };
-
-  const handleArtistPress = (artistName: string) => {
-    // Navegar a vista de artista o filtrar canciones
-    console.log('Artist pressed:', artistName);
-  };
-
-  const handleGenrePress = (genre: string) => {
-    // Filtrar canciones por género
-    console.log('Genre pressed:', genre);
-  };
-
-  const handlePlaylistPress = (playlist: any) => {
-    // Navegar a vista de playlist
-    console.log('Playlist pressed:', playlist.name);
+    navigation?.navigate('NowPlaying');
   };
 
   const renderSongCard = ({ item }: { item: any }) => {
     const isCurrentTrack = currentTrack?.id === item.id;
-    
     return (
       <TouchableOpacity
         style={styles.songCard}
         onPress={() => handleTrackPress(item)}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
       >
-        <Image source={item.coverImage} style={styles.songCardImage} resizeMode="cover" />
+        <View style={styles.songCardImageWrap}>
+          <Image source={item.coverImage} style={styles.songCardImage} resizeMode="cover" />
+          {isCurrentTrack && isPlaying && (
+            <View style={styles.playingBadge}>
+              <Ionicons name="musical-notes" size={12} color={Colors.background} />
+            </View>
+          )}
+        </View>
         <Text style={styles.songCardTitle} numberOfLines={1}>
           {item.title}
         </Text>
         <Text style={styles.songCardArtist} numberOfLines={1}>
           {item.artist}
         </Text>
-        {isCurrentTrack && isPlaying && (
-          <View style={styles.playingIndicator}>
-            <Ionicons name="musical-notes" size={12} color={Colors.primary} />
-          </View>
-        )}
       </TouchableOpacity>
     );
   };
 
-  const renderArtistCard = ({ item }: { item: any }) => {
-    return (
-      <TouchableOpacity
-        style={styles.artistCard}
-        onPress={() => handleArtistPress(item.name)}
-        activeOpacity={0.8}
-      >
-        <Image source={item.cover} style={styles.artistCardImage} resizeMode="cover" />
-        <Text style={styles.artistCardName} numberOfLines={1}>
-          {item.name}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
+  const renderArtistCard = ({ item }: { item: any }) => (
+    <TouchableOpacity style={styles.artistCard} activeOpacity={0.85}>
+      <Image source={item.cover} style={styles.artistCardImage} resizeMode="cover" />
+      <Text style={styles.artistCardName} numberOfLines={1}>
+        {item.name}
+      </Text>
+    </TouchableOpacity>
+  );
 
-  const renderGenreCard = ({ item }: { item: string }) => {
+  const renderGenreCard = ({ item, index }: { item: string; index: number }) => {
     const genreSongs = getLocalSongsByGenre(item);
-    
+    const tint = GenrePalette[index % GenrePalette.length];
     return (
       <TouchableOpacity
-        style={styles.genreCard}
-        onPress={() => handleGenrePress(item)}
-        activeOpacity={0.8}
+        style={[styles.genreCard, { backgroundColor: tint + '22', borderColor: tint + '55' }]}
+        activeOpacity={0.85}
       >
-        <View style={styles.genreCardContent}>
-          <Ionicons name="musical-notes" size={24} color={Colors.primary} />
-          <Text style={styles.genreCardName}>{item}</Text>
-          <Text style={styles.genreCardCount}>{genreSongs.length} canciones</Text>
-        </View>
+        <View style={[styles.genreDot, { backgroundColor: tint }]} />
+        <Text style={styles.genreCardName}>{item}</Text>
+        <Text style={styles.genreCardCount}>{genreSongs.length} tracks</Text>
       </TouchableOpacity>
     );
   };
 
-  const renderPlaylistCard = ({ item }: { item: any }) => {
-    return (
-      <TouchableOpacity
-        style={styles.playlistCard}
-        onPress={() => handlePlaylistPress(item)}
-        activeOpacity={0.8}
-      >
-        <Image source={item.cover} style={styles.playlistCardImage} resizeMode="cover" />
-        <Text style={styles.playlistCardTitle} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text style={styles.playlistCardArtist} numberOfLines={1}>
-          {item.artist}
-        </Text>
-        <Text style={styles.playlistCardCount}>{item.songCount} songs</Text>
-      </TouchableOpacity>
-    );
-  };
+  const renderPlaylistCard = ({ item }: { item: any }) => (
+    <TouchableOpacity style={styles.playlistCard} activeOpacity={0.85}>
+      <Image source={item.cover} style={styles.playlistCardImage} resizeMode="cover" />
+      <Text style={styles.playlistCardTitle} numberOfLines={1}>
+        {item.name}
+      </Text>
+      <Text style={styles.playlistCardMeta} numberOfLines={1}>
+        {item.artist} · {item.songCount}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Sección de Perfil */}
-        <View style={styles.profileSection}>
-          <View style={styles.profileHeader}>
-            <View style={styles.profileInfo}>
-              <View style={styles.avatarContainer}>
-                <View style={styles.avatar}>
-                  <Ionicons name="person" size={32} color={Colors.text} />
-                </View>
-              </View>
-              <View style={styles.profileText}>
-                <Text style={styles.greeting}>{greeting},</Text>
-                <Text style={styles.userName}>{user?.username || 'User'}</Text>
+        <View style={styles.topBar}>
+          <View>
+            <Text style={styles.brand}>MyMusic</Text>
+            <Text style={styles.greeting}>
+              {greeting}, <Text style={styles.userName}>{user?.username || 'listener'}</Text>
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
+            <Ionicons name="notifications-outline" size={20} color={Colors.text} />
+            <View style={styles.notifDot} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.searchWrap}>
+          <Ionicons name="search" size={18} color={Colors.textTertiary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar canciones, artistas…"
+            placeholderTextColor={Colors.textTertiary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        {featured && (
+          <TouchableOpacity
+            style={styles.hero}
+            activeOpacity={0.9}
+            onPress={() => handleTrackPress(featured)}
+          >
+            <Image source={featured.coverImage} style={styles.heroImage} resizeMode="cover" />
+            <View style={styles.heroScrim} />
+            <View style={styles.heroContent}>
+              <Text style={styles.heroKicker}>Escucha ahora</Text>
+              <Text style={styles.heroTitle} numberOfLines={2}>
+                {featured.title}
+              </Text>
+              <Text style={styles.heroArtist}>{featured.artist}</Text>
+              <View style={styles.heroCta}>
+                <Ionicons name="play" size={16} color={Colors.background} />
+                <Text style={styles.heroCtaText}>Reproducir</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
-              <Ionicons name="notifications-outline" size={24} color={Colors.text} />
-              <View style={styles.notificationDot} />
-            </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        )}
 
-        {/* Buscador */}
-        <View style={styles.searchSection}>
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color={Colors.textSecondary} style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar canciones o playlists"
-              placeholderTextColor={Colors.textTertiary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-        </View>
-
-        {/* Sección: Tus Canciones (Top 15) */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
-              <Text style={styles.sectionTitle}>Tu Música</Text>
-            </View>
-            <TouchableOpacity activeOpacity={0.7}>
-              <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Tu música</Text>
+            <Text style={styles.sectionLink}>Ver todo</Text>
           </View>
           <FlatList
             data={topSongs}
@@ -265,16 +227,10 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           />
         </View>
 
-        {/* Sección: Top Artists */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Ionicons name="people" size={20} color={Colors.primary} />
-              <Text style={styles.sectionTitle}>Top Artists</Text>
-            </View>
-            <TouchableOpacity activeOpacity={0.7}>
-              <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Artistas</Text>
+            <Text style={styles.sectionLink}>Ver todo</Text>
           </View>
           <FlatList
             data={artists}
@@ -286,16 +242,9 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           />
         </View>
 
-        {/* Sección: Categories */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Ionicons name="grid" size={20} color={Colors.primary} />
-              <Text style={styles.sectionTitle}>Categorías</Text>
-            </View>
-            <TouchableOpacity activeOpacity={0.7}>
-              <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Categorías</Text>
           </View>
           <FlatList
             data={genres}
@@ -307,16 +256,10 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           />
         </View>
 
-        {/* Sección: Playlists */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Ionicons name="list" size={20} color={Colors.primary} />
-              <Text style={styles.sectionTitle}>Playlists</Text>
-            </View>
-            <TouchableOpacity activeOpacity={0.7}>
-              <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Álbumes</Text>
+            <Text style={styles.sectionLink}>Ver todo</Text>
           </View>
           <FlatList
             data={playlists}
@@ -328,230 +271,182 @@ const TrackListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           />
         </View>
 
-        {/* Espacio inferior para el mini player y navegación */}
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-  },
-  profileSection: {
+  container: { flex: 1, backgroundColor: Colors.background },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingBottom: 40 },
+  topBar: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
-  },
-  profileHeader: {
+    paddingTop: 12,
+    paddingBottom: 8,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  profileInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+  brand: {
+    fontSize: 13,
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    color: Colors.primary,
+    fontWeight: '700',
+    marginBottom: 6,
   },
-  avatarContainer: {
-    marginRight: 12,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: Colors.surfaceSecondary,
+  greeting: { fontSize: 15, color: Colors.textSecondary },
+  userName: { color: Colors.text, fontWeight: '700' },
+  iconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.small,
   },
-  profileText: {
-    flex: 1,
-  },
-  greeting: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 2,
-  },
-  userName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  notificationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.surfaceSecondary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  notificationDot: {
+  notifDot: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 8,
-    height: 8,
+    top: 11,
+    right: 11,
+    width: 7,
+    height: 7,
     borderRadius: 4,
     backgroundColor: Colors.primary,
   },
-  searchSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-  },
-  searchContainer: {
+  searchWrap: {
+    marginHorizontal: 20,
+    marginTop: 12,
+    marginBottom: 18,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceSecondary,
-    borderRadius: 25,
-    paddingHorizontal: 18,
-    height: 50,
-    ...Shadows.small,
+    gap: 10,
   },
-  searchIcon: {
-    marginRight: 12,
-  },
-  searchInput: {
-    flex: 1,
-    color: Colors.text,
-    fontSize: 16,
-    paddingVertical: 0,
-  },
-  section: {
+  searchInput: { flex: 1, color: Colors.text, fontSize: 15, paddingVertical: 0 },
+  hero: {
+    marginHorizontal: 20,
+    height: 210,
+    borderRadius: 24,
+    overflow: 'hidden',
     marginBottom: 28,
+    ...Shadows.large,
   },
+  heroImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  heroScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(9,9,11,0.45)',
+  },
+  heroContent: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: 18,
+  },
+  heroKicker: {
+    color: Colors.secondary,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  heroTitle: {
+    color: Colors.text,
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  heroArtist: { color: Colors.textSecondary, fontSize: 14, marginBottom: 14 },
+  heroCta: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  heroCtaText: { color: Colors.background, fontWeight: '700', fontSize: 13 },
+  section: { marginBottom: 26 },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  sectionTitleRow: {
+    marginBottom: 14,
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '800',
     color: Colors.text,
-    marginLeft: 8,
+    letterSpacing: -0.3,
   },
-  horizontalList: {
-    paddingHorizontal: 20,
-  },
-  songCard: {
-    width: 140,
-    marginRight: 16,
-    position: 'relative',
-  },
+  sectionLink: { fontSize: 13, color: Colors.textTertiary, fontWeight: '600' },
+  horizontalList: { paddingHorizontal: 20 },
+  songCard: { width: 136, marginRight: 14 },
+  songCardImageWrap: { position: 'relative', marginBottom: 10 },
   songCardImage: {
-    width: 140,
-    height: 140,
-    borderRadius: 12,
-    marginBottom: 10,
-    ...Shadows.small,
+    width: 136,
+    height: 136,
+    borderRadius: 18,
+    backgroundColor: Colors.surface,
   },
-  songCardTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: 4,
-  },
-  songCardArtist: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  playingIndicator: {
+  playingBadge: {
     position: 'absolute',
-    top: 8,
     right: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.background,
+    bottom: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.small,
   },
-  artistCard: {
-    width: 100,
-    marginRight: 16,
-    alignItems: 'center',
-  },
+  songCardTitle: { color: Colors.text, fontSize: 14, fontWeight: '700', marginBottom: 3 },
+  songCardArtist: { color: Colors.textSecondary, fontSize: 12 },
+  artistCard: { width: 92, marginRight: 14, alignItems: 'center' },
   artistCardImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 10,
-    ...Shadows.small,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: Colors.borderLight,
   },
-  artistCardName: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: Colors.text,
-    textAlign: 'center',
-  },
+  artistCardName: { color: Colors.text, fontSize: 12, fontWeight: '600', textAlign: 'center' },
   genreCard: {
-    width: 140,
-    height: 100,
-    marginRight: 16,
-    backgroundColor: Colors.surfaceSecondary,
-    borderRadius: 16,
-    ...Shadows.small,
+    width: 148,
+    height: 96,
+    marginRight: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    justifyContent: 'flex-end',
   },
-  genreCardContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  genreCardName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  genreCardCount: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  playlistCard: {
-    width: 160,
-    marginRight: 16,
-  },
+  genreDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 10 },
+  genreCardName: { color: Colors.text, fontSize: 16, fontWeight: '800' },
+  genreCardCount: { color: Colors.textSecondary, fontSize: 12, marginTop: 2 },
+  playlistCard: { width: 156, marginRight: 14 },
   playlistCardImage: {
-    width: 160,
-    height: 160,
-    borderRadius: 12,
+    width: 156,
+    height: 156,
+    borderRadius: 18,
     marginBottom: 10,
-    ...Shadows.small,
+    backgroundColor: Colors.surface,
   },
-  playlistCardTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: 4,
-  },
-  playlistCardArtist: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginBottom: 2,
-  },
-  playlistCardCount: {
-    fontSize: 11,
-    color: Colors.textTertiary,
-  },
+  playlistCardTitle: { color: Colors.text, fontSize: 14, fontWeight: '700', marginBottom: 3 },
+  playlistCardMeta: { color: Colors.textSecondary, fontSize: 12 },
 });
 
 export default TrackListScreen;

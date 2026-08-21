@@ -15,7 +15,9 @@ import { localSongs } from '../data/localMusic';
 
 const FavoritesScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const { currentTrack, isPlaying, playNewSong } = useAudio();
-  const [favorites, setFavorites] = useState<string[]>([]); // IDs de canciones favoritas
+  const [favorites, setFavorites] = useState<string[]>(() =>
+    localSongs.slice(0, 5).map((s) => s.id)
+  ); // demo: primeras canciones favoritas
   const insets = useSafeAreaInsets();
 
   // Filtrar canciones favoritas
@@ -127,12 +129,13 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: '800',
+    letterSpacing: -0.6,
     color: Colors.text,
     marginBottom: 6,
   },
   headerSubtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.textSecondary,
     fontWeight: '500',
   },
@@ -145,39 +148,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    borderRadius: 16,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   currentSongItem: {
     backgroundColor: Colors.overlayLight,
-    borderLeftWidth: 4,
+    borderColor: Colors.primary + '66',
+    borderLeftWidth: 3,
     borderLeftColor: Colors.primary,
-    paddingLeft: 16,
-    marginHorizontal: -20,
-    paddingHorizontal: 20,
   },
   songImage: {
-    width: 56,
-    height: 56,
+    width: 54,
+    height: 54,
     borderRadius: 12,
-    marginRight: 16,
-    ...Shadows.small,
+    marginRight: 14,
   },
   songInfo: {
     flex: 1,
   },
   songTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: Colors.text,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   currentSongTitle: {
     color: Colors.primary,
-    fontWeight: 'bold',
   },
   songArtist: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textSecondary,
   },
   favoriteButton: {
@@ -191,7 +194,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.text,
     marginTop: 20,
     marginBottom: 8,

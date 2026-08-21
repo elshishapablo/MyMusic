@@ -1,103 +1,98 @@
-// Sistema de colores rosa moderno
+// MyMusic — sistema visual editorial
 export const Colors = {
-  // Colores principales (Rosa medio)
-  primary: '#FF6B9D', // Rosa medio equilibrado
-  primaryDark: '#E55A8A', // Rosa medio oscuro
-  primaryLight: '#FF8FB3', // Rosa medio claro
-  
-  // Colores secundarios
-  secondary: '#FF8FB3', // Rosa medio claro
-  secondaryDark: '#FF6B9D', // Rosa medio
-  secondaryLight: '#FFB3CC', // Rosa claro
-  
-  // Colores de acento
-  accent: '#FF6B9D', // Rosa medio
-  accentDark: '#E55A8A', // Rosa medio oscuro
-  accentLight: '#FF8FB3', // Rosa medio claro
-  
-  // Colores de fondo
-  background: '#0A0A0A', // Negro profundo
-  backgroundSecondary: '#1A1A1A', // Gris muy oscuro
-  backgroundTertiary: '#2A2A2A', // Gris oscuro
-  
-  // Colores de superficie
-  surface: '#1E1E1E', // Gris oscuro
-  surfaceSecondary: '#2D2D2D', // Gris medio oscuro
-  surfaceTertiary: '#3A3A3A', // Gris medio
-  
-  // Colores de texto
-  text: '#FFFFFF', // Blanco
-  textSecondary: '#E0E0E0', // Gris claro
-  textTertiary: '#B0B0B0', // Gris medio
-  textMuted: '#808080', // Gris
-  
-  // Colores de estado
-  success: '#00FF7F', // Spring Green
-  warning: '#FFD700', // Gold
-  error: '#FF4444', // Red
-  info: '#00BFFF', // Deep Sky Blue
-  
-  // Colores de gradiente
-  gradientStart: '#FF6B9D', // Rosa medio
-  gradientEnd: '#FF8FB3', // Rosa medio claro
-  gradientSecondary: '#FFB3CC', // Rosa claro
-  
-  // Colores de botones
-  buttonPrimary: '#FF6B9D', // Rosa medio
-  buttonSecondary: '#2D2D2D', // Gris oscuro
-  buttonDisabled: '#404040', // Gris deshabilitado
-  
-  // Colores de bordes
-  border: '#404040', // Gris medio
-  borderLight: '#606060', // Gris claro
-  borderDark: '#202020', // Gris oscuro
-  
-  // Colores de sombra
-  shadow: 'rgba(255, 107, 157, 0.3)', // Rosa medio con transparencia
-  shadowDark: 'rgba(0, 0, 0, 0.5)', // Negro con transparencia
-  
-  // Colores de overlay
-  overlay: 'rgba(0, 0, 0, 0.7)', // Negro con transparencia
-  overlayLight: 'rgba(255, 107, 157, 0.15)', // Rosa medio con transparencia
+  primary: '#FF5C4D',
+  primaryDark: '#E0483C',
+  primaryLight: '#FF8A7A',
+
+  secondary: '#E8C547',
+  secondaryDark: '#C9A82E',
+  secondaryLight: '#F2D978',
+
+  accent: '#FF5C4D',
+  accentDark: '#E0483C',
+  accentLight: '#FF8A7A',
+
+  background: '#09090B',
+  backgroundSecondary: '#101014',
+  backgroundTertiary: '#18181F',
+
+  surface: '#141418',
+  surfaceSecondary: '#1C1C24',
+  surfaceTertiary: '#26262F',
+
+  text: '#F7F4EF',
+  textSecondary: '#B8B4AE',
+  textTertiary: '#7A7670',
+  textMuted: '#5A574F',
+
+  success: '#3DDC97',
+  warning: '#E8C547',
+  error: '#FF5C4D',
+  info: '#5B9DFF',
+
+  gradientStart: '#FF5C4D',
+  gradientEnd: '#FF8A7A',
+  gradientSecondary: '#E8C547',
+
+  buttonPrimary: '#FF5C4D',
+  buttonSecondary: '#1C1C24',
+  buttonDisabled: '#2A2A32',
+
+  border: 'rgba(247,244,239,0.08)',
+  borderLight: 'rgba(247,244,239,0.14)',
+  borderDark: 'rgba(0,0,0,0.4)',
+
+  shadow: 'rgba(255, 92, 77, 0.28)',
+  shadowDark: 'rgba(0, 0, 0, 0.55)',
+
+  overlay: 'rgba(9, 9, 11, 0.72)',
+  overlayLight: 'rgba(255, 92, 77, 0.12)',
 };
 
-// Gradientes predefinidos
 export const Gradients = {
-  primary: ['#FF6B9D', '#FF8FB3'],
-  secondary: ['#FFB3CC', '#FFCCDD'],
-  background: ['#0A0A0A', '#1A1A1A'],
-  card: ['#1E1E1E', '#2D2D2D'],
-  button: ['#FF6B9D', '#E55A8A'],
+  primary: ['#FF5C4D', '#FF8A7A'],
+  secondary: ['#E8C547', '#F2D978'],
+  background: ['#09090B', '#141418'],
+  card: ['#141418', '#1C1C24'],
+  button: ['#FF5C4D', '#E0483C'],
 };
 
-// Sombras predefinidas
+export const GenrePalette = [
+  '#FF5C4D',
+  '#E8C547',
+  '#5B9DFF',
+  '#3DDC97',
+  '#C084FC',
+  '#FB923C',
+];
+
 export const Shadows = {
   small: {
-    shadowColor: Colors.shadow,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
     elevation: 2,
   },
   medium: {
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 5,
   },
   large: {
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.45,
+    shadowRadius: 24,
+    elevation: 10,
   },
   glow: {
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOpacity: 0.55,
+    shadowRadius: 18,
+    elevation: 8,
   },
 };
